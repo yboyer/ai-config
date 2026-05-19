@@ -1,0 +1,8 @@
+{
+  "extensions": [
+    "../extensions"
+  ],
+  "skills": [
+    "../skills"
+  ]
+}
