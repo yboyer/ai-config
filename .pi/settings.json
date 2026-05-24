@@ -4,5 +4,20 @@
   ],
   "skills": [
     "../skills"
+  ],
+  "prompts": [
+    "../prompts"
+  ],
+  "themes": [
+    "../themes"
+  ],
+  "packages": [
+    {
+      "source": "git:github.com/yboyer/pi",
+      "extensions": [],
+      "skills": [],
+      "prompts": [],
+      "themes": []
+    }
   ]
 }
