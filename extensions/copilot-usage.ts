@@ -35,19 +35,19 @@ type CopilotUserResponse = {
 
 type UsageState = (
   | {
-    type: 'error'
-    error: string
-  }
+      type: 'error'
+      error: string
+    }
   | {
-    account: string
-    type: 'success'
-    percentage: number
-    used: number
-    entitlement: number
-  }
+      account: string
+      type: 'success'
+      percentage: number
+      used: number
+      entitlement: number
+    }
   | {
-    type: 'loading'
-  }
+      type: 'loading'
+    }
 ) & {
   details: string
 }

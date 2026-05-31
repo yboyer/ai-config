@@ -159,17 +159,23 @@ function formatStatusSummary(
   }
 }
 
-async function getGitStatusLine({ cwd, theme }: { cwd: string, theme: Theme }): Promise<string> {
+async function getGitStatusLine({ cwd, theme }: { cwd: string; theme: Theme }): Promise<string> {
   await runGit(['rev-parse', '--is-inside-work-tree'], cwd)
-  const [branch, statusSummary] = await Promise.all([
-    getBranch(cwd),
-    getStatusSummary(cwd),
-  ])
+  const [branch, statusSummary] = await Promise.all([getBranch(cwd), getStatusSummary(cwd)])
 
   const added = customFg(COLORS.added, statusSummary.added ? ` ${statusSummary.added}+` : '')
-  const deleted = customFg(COLORS.deleted, statusSummary.deleted ? ` ${statusSummary.deleted}-` : '')
-  const modified = customFg(COLORS.modified, statusSummary.modified ? ` ${statusSummary.modified}*` : '')
-  const renamed = customFg(COLORS.renamed, statusSummary.renamed ? ` ${statusSummary.renamed}>` : '')
+  const deleted = customFg(
+    COLORS.deleted,
+    statusSummary.deleted ? ` ${statusSummary.deleted}-` : ''
+  )
+  const modified = customFg(
+    COLORS.modified,
+    statusSummary.modified ? ` ${statusSummary.modified}*` : ''
+  )
+  const renamed = customFg(
+    COLORS.renamed,
+    statusSummary.renamed ? ` ${statusSummary.renamed}>` : ''
+  )
 
   const committable = statusSummary.unstaged
     ? customFg(COLORS.unstaged, ` ${statusSummary.unstaged}⚡︎`)
@@ -189,10 +195,7 @@ async function getGitStatusLine({ cwd, theme }: { cwd: string, theme: Theme }): 
     default:
       remote = ''
   }
-  const rebase = statusSummary.rebase
-    ? customFg(COLORS.white, ` ${statusSummary.rebase}`)
-    : ''
-
+  const rebase = statusSummary.rebase ? customFg(COLORS.white, ` ${statusSummary.rebase}`) : ''
 
   return `${theme.fg('dim', '(')}${theme.fg('dim', branch)}${added}${deleted}${modified}${renamed}${theme.fg('dim', ')')}${committable}${remote}${rebase}`
 }

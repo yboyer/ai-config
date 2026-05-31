@@ -267,8 +267,8 @@ export default function question(pi: ExtensionAPI) {
       if (details.wasCustom) {
         return new Text(
           theme.fg('success', '✓ ') +
-          theme.fg('muted', '(wrote) ') +
-          theme.fg('accent', details.answer),
+            theme.fg('muted', '(wrote) ') +
+            theme.fg('accent', details.answer),
           0,
           0
         )

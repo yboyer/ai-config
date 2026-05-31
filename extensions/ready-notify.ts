@@ -10,8 +10,8 @@ const MESSAGE = process.env.PI_NOTIFY_MESSAGE?.trim() || 'Ready for input'
 const CHANNELS = new Set(
   (process.env.PI_NOTIFY_CHANNELS?.trim() || 'terminal,desktop,bell,sound')
     .split(',')
-    .map((part) => part.trim().toLowerCase())
-    .filter(Boolean),
+    .map(part => part.trim().toLowerCase())
+    .filter(Boolean)
 )
 
 function has(channel: 'terminal' | 'desktop' | 'bell' | 'sound') {
@@ -19,7 +19,11 @@ function has(channel: 'terminal' | 'desktop' | 'bell' | 'sound') {
 }
 
 function escapeOsc(text: string) {
-  return text.replaceAll('\u0007', ' ').replaceAll('\u001b', '').replaceAll('\n', ' ').replaceAll(';', ',')
+  return text
+    .replaceAll('\u0007', ' ')
+    .replaceAll('\u001b', '')
+    .replaceAll('\n', ' ')
+    .replaceAll(';', ',')
 }
 
 async function tryExec(file: string, args: string[]) {
@@ -30,8 +34,6 @@ async function tryExec(file: string, args: string[]) {
     return false
   }
 }
-
-
 
 function notifyTerminal(ctx: ExtensionContext, title: string, message: string) {
   if (ctx.hasUI) {
