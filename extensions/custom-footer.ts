@@ -180,9 +180,13 @@ export default function (pi: ExtensionAPI) {
             const sortedStatuses = Array.from(extensionStatusesClone.entries())
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([, text]) => sanitizeStatusText(text))
+              .filter(text => text.trim().length > 0)
             const statusLine = sortedStatuses.join(' ')
-            // Truncate to terminal width with dim ellipsis for consistency with footer style
-            lines.push(truncateToWidth(statusLine, width, theme.fg('dim', '...')))
+
+            if (statusLine.length > 0) {
+              // Truncate to terminal width with dim ellipsis for consistency with footer style
+              lines.push(truncateToWidth(statusLine, width, theme.fg('dim', '...')))
+            }
           }
 
           return [...lines, ...bottomLines]
