@@ -124,7 +124,8 @@ async function fetchUsage(): Promise<UsageState> {
 }
 
 function formatStatusText(theme: Theme, state: UsageState): string {
-  const account = state.type === 'success' ? ` (${state.account})` : ''
+  // const account = state.type === 'success' ? ` (${state.account})` : ''
+  const account = ''
   const prefix = theme.fg('dim', `Copilot${account}: `)
 
   if (state.type === 'error') {

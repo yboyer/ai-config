@@ -31,6 +31,14 @@ function sanitizeStatusText(text: string): string {
     .trim()
 }
 
+function formatCwd(cwd: string): string {
+  const home = process.env.HOME
+  if (home && cwd.startsWith(home)) {
+    return `~${cwd.slice(home.length)}`
+  }
+  return cwd
+}
+
 export default function (pi: ExtensionAPI) {
   function installFooter(ctx: ExtensionContext) {
     ctx.ui.setFooter((tui, theme, footerData) => {
@@ -108,9 +116,8 @@ export default function (pi: ExtensionAPI) {
             statsParts.push(costStr)
           }
 
-          statsParts.push('•')
-
           if (ctx.model?.provider === 'github-copilot') {
+            statsParts.push('•')
             statsParts.push(extensionStatusesClone.get('copilot-usage') ?? '')
             extensionStatusesClone.delete('copilot-usage') // Remove from extension statuses to avoid duplication in the extension status line
           }
@@ -161,7 +168,9 @@ export default function (pi: ExtensionAPI) {
 
           const lines = [dimStatsLeft + dimRemainder]
 
+          const bottomLines: string[] = [theme.fg('muted', formatCwd(ctx.sessionManager.getCwd()))]
           if (extensionStatusesClone.has('yboyer-git-status')) {
+            bottomLines[0] += ` ${extensionStatusesClone.get('yboyer-git-status')!}`
             // Already displayed in the editor
             extensionStatusesClone.delete('yboyer-git-status')
           }
@@ -176,7 +185,7 @@ export default function (pi: ExtensionAPI) {
             lines.push(truncateToWidth(statusLine, width, theme.fg('dim', '...')))
           }
 
-          return lines
+          return [...lines, ...bottomLines]
         },
       }
     })

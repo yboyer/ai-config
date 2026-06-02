@@ -258,11 +258,6 @@ class GitStatus {
 }
 
 class BorderStatusEditor extends CustomEditor {
-  private gitStatusEditor: GitStatus
-
-  private gitStatusLine = ''
-  private REFRESH_INTERVAL_MS = 2_000
-
   private formatInputWithCommandHighlight(paddingX: number, input: string): string {
     const commandMatch = input.match(/\s\/([\w:-]+)(.*)$/)
     if (!commandMatch) return input
@@ -281,41 +276,10 @@ class BorderStatusEditor extends CustomEditor {
   ) {
     super(tui, theme, keybindings)
     this.sessionState = sessionState
-
-    this.gitStatusEditor = new GitStatus(sessionState)
-
-    void this.refreshGitStatus()
-    setInterval(() => {
-      void this.refreshGitStatus()
-    }, this.REFRESH_INTERVAL_MS)
   }
 
   refresh() {
     this.tui.requestRender()
-  }
-
-  private async refreshGitStatus() {
-    try {
-      const newLine = await this.gitStatusEditor.getGitStatusLine({ cwd: this.sessionState.cwd })
-
-      if (newLine !== this.gitStatusLine) {
-        this.gitStatusLine = newLine
-        this.tui.requestRender()
-      }
-    } catch {
-      if (this.gitStatusLine !== '') {
-        this.gitStatusLine = ''
-        this.tui.requestRender()
-      }
-    }
-  }
-
-  private formatCwd(cwd: string): string {
-    const home = process.env.HOME
-    if (home && cwd.startsWith(home)) {
-      return `~${cwd.slice(home.length)}`
-    }
-    return cwd
   }
 
   render(width: number): string[] {
@@ -335,10 +299,8 @@ class BorderStatusEditor extends CustomEditor {
       ` ${this.sessionState.model}${this.sessionState.thinking !== 'off' ? ` · ${this.sessionState.thinking}` : ''} `
     )
     const bottomLeft = ''
-    // const bottomLeft = this.sessionState.sessionName ? ` Session: ${this.sessionState.sessionName} ` : ''
-    const topRight = this.gitStatusLine ? ` ${this.gitStatusLine} ` : ''
-    const bottomRight =
-      this.sessionState.theme?.fg('dim', ` ${this.formatCwd(this.sessionState.cwd)} `) ?? ''
+    const topRight = ''
+    const bottomRight = ''
 
     lines[0] = fitBorder(topLeft, topRight, width, this.borderColor)
     lines.splice(1, 0, '')
