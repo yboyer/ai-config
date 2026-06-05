@@ -107,11 +107,10 @@ export default function (pi: ExtensionAPI) {
           }
           statsParts.push(contextPercentStr)
 
-          statsParts.push('•')
-
           // Show cost with "(sub)" indicator if using OAuth subscription
           const usingSubscription = ctx.model ? ctx.modelRegistry.isUsingOAuth(ctx.model) : false
           if (totalCost || usingSubscription) {
+            statsParts.push('•')
             const costStr = `$${totalCost.toFixed(3)}${usingSubscription ? ' (sub)' : ''}`
             statsParts.push(costStr)
           }
