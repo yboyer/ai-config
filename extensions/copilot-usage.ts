@@ -25,11 +25,10 @@ type PremiumInteractionsSnapshot = {
 
 type CopilotUserResponse = {
   login: string
-  copilot_plan?: string
-  quota_reset_date?: string
-  quota_reset_date_utc?: string
-  quota_snapshots?: {
-    premium_interactions?: PremiumInteractionsSnapshot
+  copilot_plan: 'business' | string
+  quota_reset_date_utc: string
+  quota_snapshots: {
+    premium_interactions: PremiumInteractionsSnapshot
   }
 }
 
@@ -59,9 +58,7 @@ function formatNumber(value: number): string {
   }).format(value)
 }
 
-function formatDate(value?: string): string {
-  if (!value) return 'unknown'
-
+function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
 
@@ -99,7 +96,7 @@ function buildUsageState(payload: CopilotUserResponse): UsageState {
   const percentRemaining = Number(snapshot.percent_remaining ?? 0)
   const used = Math.floor(Math.max(0, entitlement - remaining))
   const percentUsed = Math.floor(Math.max(0, Math.min(100, 100 - percentRemaining)))
-  const resetAt = formatDate(payload.quota_reset_date_utc ?? payload.quota_reset_date)
+  const resetAt = formatDate(payload.quota_reset_date_utc)
   const overage = snapshot.overage_permitted ? 'yes' : 'no'
   const plan = payload.copilot_plan ?? 'unknown'
 
@@ -134,6 +131,10 @@ function formatStatusText(theme: Theme, state: UsageState): string {
 
   if (state.type === 'loading') {
     return `${prefix}${theme.fg('dim', 'loading…')}`
+  }
+
+  if (state.entitlement === Infinity) {
+    return theme.fg('text', `${prefix}${formatNumber(state.entitlement)}`)
   }
 
   let percentageStr: string
