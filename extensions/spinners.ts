@@ -89,6 +89,5 @@ export default function (pi: ExtensionAPI) {
       frames: FRAMES.map(frame => ctx.ui.theme.fg('accent', frame)),
       intervalMs: INTERVAL,
     })
-    ctx.ui.setStatus('working-indicator', ctx.ui.theme.fg('dim', `Indicator`))
   })
 }
