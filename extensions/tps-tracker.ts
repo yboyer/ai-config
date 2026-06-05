@@ -5,7 +5,20 @@
  * final TPS statistics at the end of each agent run.
  */
 
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
+
+const STATUS_KEY = 'tps'
+
+function setStatus(ctx: ExtensionContext, tokens: number, elapsed: number) {
+  const theme = ctx.ui.theme
+
+  const tps = Math.round(tokens / elapsed)
+  const tokenLabel = `${tokens} tok`
+  ctx.ui.setStatus(
+    STATUS_KEY,
+    `${theme.fg('accent', `${tps || 0} tok/s`)} ${theme.fg('dim', `(${tokenLabel} / ${elapsed.toFixed(1)}s)`)}`
+  )
+}
 
 export default function (pi: ExtensionAPI) {
   /** Timestamp when the current assistant message event started. Used as a fallback. */
@@ -26,7 +39,8 @@ export default function (pi: ExtensionAPI) {
     streamStart = null
     estimatedStreamedTokens = 0
     const theme = ctx.ui.theme
-    ctx.ui.setStatus('tps', theme.fg('dim', '⏱ generating...'))
+
+    setStatus(ctx, 0, 0)
   })
 
   pi.on('message_start', async event => {
@@ -56,14 +70,7 @@ export default function (pi: ExtensionAPI) {
     const currentTokens = officialTokens > 0 ? officialTokens : estimatedStreamedTokens
 
     if (elapsed > 0 && currentTokens > 0) {
-      const tps = Math.round(currentTokens / elapsed)
-      const tokenLabel =
-        officialTokens > 0 ? `${officialTokens} tok` : `~${Math.round(estimatedStreamedTokens)} tok`
-      const theme = ctx.ui.theme
-      ctx.ui.setStatus(
-        'tps',
-        `${theme.fg('accent', `${tps} tok/s`)} ${theme.fg('dim', `(${tokenLabel} / ${elapsed.toFixed(1)}s)`)}`
-      )
+      setStatus(ctx, currentTokens, elapsed)
     }
   })
 
@@ -100,6 +107,6 @@ export default function (pi: ExtensionAPI) {
     )
 
     ctx.ui.notify(`${icon} ${tpsLabel}  ${detail}`, 'info')
-    ctx.ui.setStatus('tps', theme.fg('dim', `done — ${tpsLabel}`))
+    ctx.ui.setStatus(STATUS_KEY, '')
   })
 }
