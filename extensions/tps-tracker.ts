@@ -13,7 +13,7 @@ function setStatus(ctx: ExtensionContext, tokens: number, elapsed: number) {
   const theme = ctx.ui.theme
 
   const tps = Math.round(tokens / elapsed)
-  const tokenLabel = `${tokens} tok`
+  const tokenLabel = `${Math.round(tokens)} tok`
   ctx.ui.setStatus(
     STATUS_KEY,
     `${theme.fg('accent', `${tps || 0} tok/s`)} ${theme.fg('dim', `(${tokenLabel} / ${elapsed.toFixed(1)}s)`)}`
@@ -38,7 +38,6 @@ export default function (pi: ExtensionAPI) {
     messageStart = null
     streamStart = null
     estimatedStreamedTokens = 0
-    const theme = ctx.ui.theme
 
     setStatus(ctx, 0, 0)
   })
