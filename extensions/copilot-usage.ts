@@ -9,18 +9,18 @@ const REFRESH_INTERVAL_MS = 1 * 60 * 1000
 const GH_ARGS = ['api', '/copilot_internal/user']
 
 type PremiumInteractionsSnapshot = {
-  overage_count?: number
-  overage_permitted?: boolean
-  percent_remaining?: number
-  quota_id?: string
-  quota_remaining?: number
-  unlimited?: boolean
-  timestamp_utc?: string
-  has_quota?: boolean
-  quota_reset_at?: number
-  token_based_billing?: boolean
-  remaining?: number
-  entitlement?: number
+  overage_count: number
+  overage_permitted: boolean
+  percent_remaining: number
+  quota_id: string
+  quota_remaining: number
+  unlimited: boolean
+  timestamp_utc: string
+  has_quota: boolean
+  quota_reset_at: number
+  token_based_billing: boolean
+  remaining: number
+  entitlement: number
 }
 
 type CopilotUserResponse = {
@@ -41,6 +41,7 @@ type UsageState = (
       account: string
       type: 'success'
       percentage: number
+      overage: boolean
       used: number
       entitlement: number
     }
@@ -80,11 +81,15 @@ function buildUsageState(payload: CopilotUserResponse): UsageState {
     }
   }
 
+  const account = payload.login
+  const overage = snapshot.overage_permitted
+
   if (snapshot.unlimited) {
     return {
-      account: payload.login,
+      account,
       type: 'success',
       entitlement: Infinity,
+      overage,
       percentage: 0,
       used: 0,
       details: 'No monthly quota for `premium_interactions` plan.',
@@ -97,16 +102,16 @@ function buildUsageState(payload: CopilotUserResponse): UsageState {
   const used = Math.floor(Math.max(0, entitlement - remaining))
   const percentUsed = Math.floor(Math.max(0, Math.min(100, 100 - percentRemaining)))
   const resetAt = formatDate(payload.quota_reset_date_utc)
-  const overage = snapshot.overage_permitted ? 'yes' : 'no'
   const plan = payload.copilot_plan ?? 'unknown'
 
   return {
-    account: payload.login,
+    account,
     type: 'success',
     percentage: percentUsed,
     used,
+    overage,
     entitlement,
-    details: `Plan: ${plan} · remaining: ${formatNumber(remaining)} · reset: ${resetAt} · overage: ${overage}`,
+    details: `Plan: ${plan} · remaining: ${formatNumber(remaining)} · reset: ${resetAt} · overage: ${overage ? 'yes' : 'no'}`,
   }
 }
 
@@ -148,7 +153,7 @@ function formatStatusText(theme: Theme, state: UsageState): string {
 
   return theme.fg(
     'text',
-    `${prefix}${percentageStr} ${theme.fg('dim', `(${formatNumber(state.used)}/${formatNumber(state.entitlement)})`)}`
+    `${prefix}${percentageStr} ${theme.fg('dim', `(${formatNumber(state.used)}/${formatNumber(state.entitlement)}${state.overage ? '+' : ''})`)}`
   )
 }
 
