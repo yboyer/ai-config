@@ -8,14 +8,14 @@
     "panelSoft": "#2c313c",
     "border": "#3e4452",
     "text": "#abb2bf",
-    "dim": "#5c6370",
+    "dim": "#868E9A",
     "blue": "#61afee",
     "cyan": "#56b6c2",
     "green": "#98C379",
     "red": "#e06c74",
-    "yellow": "#d19a65",
-    "orange": "#d19a66",
-    "purple": "#c677dc"
+    "yellow": "#FCA777",
+    "orange": "#DB975C",
+    "purple": "#757EF8"
   },
   "colors": {
     "accent": "blue",
@@ -68,7 +68,7 @@
     "thinkingMedium": "cyan",
     "thinkingHigh": "purple",
     "thinkingXhigh": "red",
-    "bashMode": "orange"
+    "bashMode": "yellow"
   },
   "export": {
     "pageBg": "bg",

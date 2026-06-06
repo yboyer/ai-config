@@ -6,7 +6,6 @@ import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui'
 
 const RESET = '\x1b[0m'
 const BOLD = '\x1b[1m'
-const DIM = '\x1b[2m'
 
 type Rgb = [number, number, number]
 const GRADIENT_STOPS: ReadonlyArray<Rgb> = [
@@ -62,12 +61,19 @@ function gradientLogo(lines: readonly string[], phase = 0, shine?: ShineConfig):
   })
 }
 
+// const PI_LOGO = [
+//   //
+//   '███████  ',
+//   '██   ██  ',
+//   '█████  ██',
+//   '██     ██',
+// ] as const
 const PI_LOGO = [
-  '▀██████████▀',
-  ' ╘██    ██  ',
-  '  ██    ██  ',
-  '  ██    ██  ',
-  ' ▄██▄  ▄██▄ ',
+  //
+  '███████████',
+  '  ██  ██ π ',
+  '  ██  ██   ',
+  '  ▀▀  ██   ',
 ] as const
 
 const INTRO_MS = 3000
@@ -78,11 +84,10 @@ const REST_FRAME = gradientLogo(PI_LOGO, 0)
 
 const BOX = { tl: '╭', tr: '╮', bl: '╰', br: '╯', h: '─', v: '│' }
 
-const dim = (s: string) => `${DIM}${s}${RESET}`
+const dim = (s: string) => `\x1b[38;2;136;143;158m${s}${RESET}`
 const bold = (s: string) => `${BOLD}${s}${RESET}`
-const muted = (s: string) => `\x1b[38;2;160;170;185m${s}${RESET}`
+const muted = (s: string) => `\x1b[38;2;168;178;196m${s}${RESET}`
 const accent = (s: string) => `\x1b[38;2;120;130;255m${s}${RESET}`
-const subtle = (s: string) => `\x1b[38;2;90;100;120m${s}${RESET}`
 
 function centerIn(text: string, width: number, rawLen?: number): string {
   const len = rawLen ?? visibleWidth(text)
@@ -153,23 +158,23 @@ class WelcomeCard {
 
     const logoFrames = this.#currentLogoFrame()
 
-    const leftSeparator = ` ${subtle(BOX.h.repeat(Math.max(0, leftCol - 2)))}`
-    const rightSeparator = ` ${subtle(BOX.h.repeat(Math.max(0, rightCol - 2)))}`
+    const leftSeparator = ` ${dim(BOX.h.repeat(Math.max(0, leftCol - 2)))}`
+    const rightSeparator = ` ${dim(BOX.h.repeat(Math.max(0, rightCol - 2)))}`
 
     const leftLines: string[] = [
       '',
       ...logoFrames.map(l => centerIn(l, leftCol, logoRawWidth)),
       '',
       centerIn(muted(this.modelId), leftCol),
-      centerIn(subtle(this.modelProvider), leftCol),
+      centerIn(dim(this.modelProvider), leftCol),
       '',
       leftSeparator,
-      centerIn(dim('Ctrl+Z'), leftCol),
-      centerIn(subtle('Suspend to background'), leftCol),
-      centerIn(subtle('(fg to toggle back)'), leftCol),
+      centerIn(muted('Ctrl+Z'), leftCol),
+      centerIn(dim('Suspend to background'), leftCol),
+      centerIn(dim('(fg to toggle back)'), leftCol),
       '',
-      centerIn(dim('Option+Enter'), leftCol),
-      centerIn(subtle('Queue follow-up message'), leftCol),
+      centerIn(muted('Option+Enter'), leftCol),
+      centerIn(dim('Queue follow-up message'), leftCol),
     ]
 
     const skills = this.commands
@@ -193,21 +198,21 @@ class WelcomeCard {
     section(`Skills (${skills.length})`, '/', skills)
     section(`Extensions (${extensions.length})`, '/', extensions, 4)
     section(`Prompts (${prompts.length})`, '/', prompts, 4)
-    if (!rightLines.length) rightLines.push(` ${subtle('No commands loaded')}`)
+    if (!rightLines.length) rightLines.push(` ${dim('No commands loaded')}`)
     rightLines.push('')
 
-    const v = subtle(BOX.v)
+    const v = dim(BOX.v)
     const lines: string[] = []
 
     const title = ` ${projectName()} `
     const prefix = BOX.h.repeat(3)
     const titleVisLen = prefix.length + title.length
     lines.push(
-      subtle(BOX.tl) +
-        subtle(prefix) +
-        muted(title) +
-        subtle(BOX.h.repeat(Math.max(0, boxWidth - 2 - titleVisLen))) +
-        subtle(BOX.tr)
+      dim(BOX.tl) +
+        dim(prefix) +
+        bold(dim(title)) +
+        dim(BOX.h.repeat(Math.max(0, boxWidth - 2 - titleVisLen))) +
+        dim(BOX.tr)
     )
 
     const height = Math.max(leftLines.length, rightLines.length)
@@ -223,7 +228,7 @@ class WelcomeCard {
       }
     }
 
-    lines.push(subtle(BOX.bl) + subtle(BOX.h.repeat(boxWidth - 2)) + subtle(BOX.br))
+    lines.push(dim(BOX.bl) + dim(BOX.h.repeat(boxWidth - 2)) + dim(BOX.br))
     return lines
   }
 }
