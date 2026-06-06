@@ -42,14 +42,28 @@ pi install /absolute/path/to/pi
 
 ## settings.json
 
-For full personal setup, install this package with `context-mode` and `pi-caveman` in your `settings.json`:
+For full personal setup, use this `settings.json`:
 
 ```json
 {
+  "theme": "one-dark-pro",
+  "quietStartup": true,
   "packages": [
+    "npm:pi-mcp-adapter"
     "git:github.com/yboyer/pi",
-    "npm:context-mode",
-    "npm:pi-caveman"
+    {
+      "source": "npm:context-mode",
+      "skills": [
+        "-skills/ctx-doctor/SKILL.md",
+        "-skills/ctx-index/SKILL.md",
+        "-skills/ctx-insight/SKILL.md",
+        "-skills/ctx-purge/SKILL.md",
+        "-skills/ctx-search/SKILL.md",
+        "-skills/ctx-stats/SKILL.md",
+        "-skills/ctx-upgrade/SKILL.md",
+        "-skills/context-mode/SKILL.md"
+      ]
+    }
   ]
 }
 ```
