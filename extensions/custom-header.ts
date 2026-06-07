@@ -371,6 +371,7 @@ export default function (pi: ExtensionAPI) {
     if (!ctx.hasUI) return
 
     const allowedEvents: SessionStartEvent['reason'][] = ['reload', 'startup']
+    const hasMessages = ctx.sessionManager.getEntries().filter(e => e.type === 'message').length > 0
 
     card = new WelcomeCard({
       theme: ctx.ui.theme,
@@ -383,7 +384,7 @@ export default function (pi: ExtensionAPI) {
       commands: pi.getCommands(),
     })
 
-    if (allowedEvents.includes(event.reason)) {
+    if (allowedEvents.includes(event.reason) && hasMessages) {
       await ctx.ui.custom(
         (tui, _theme, _kb, done) => {
           requestRender = () => tui.requestRender()
