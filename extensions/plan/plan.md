@@ -58,11 +58,23 @@ The plan should reflect:
 - Reference decisions from the discussion
 - Leave no ambiguity
 
-Save the comprehensive plan document in the project root `.plan/` directory using the required incrementing kebab-case filename, then show the scannable plan to the user for review. You MUST show the plan to the user; the persisted file is for tracking, not a substitute for presenting it.
+Save the comprehensive plan document in the project root `.plan/` directory using the required incrementing kebab-case filename, then present the plan to the user for review. Do NOT dump or restate the full persisted file contents in chat. Instead, respond only with a concise summary in this shape:
+
+File: {path to the plan file}
+
+Plan: {Title}
+
+{Brief summary in 1-2 short sentences.}
+
+Étapes:
+
+1. {Short synthesized step}
+2. {Short synthesized step}
+3. {Continue as needed}
 
 ## 4. Refinement
 
-On user input after showing the plan:
+On user input after showing the plan summary:
 
 - Changes requested → revise and present the updated plan. Update the corresponding file in `.plan/` to keep the documented plan in sync
 - Questions asked → clarify, or ask focused follow-up questions one at a time when needed
