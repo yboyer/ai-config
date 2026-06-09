@@ -8,7 +8,7 @@ import type {
   ExtensionAPI,
   SessionEntry,
 } from '@earendil-works/pi-coding-agent'
-import { stripFrontmatter } from '@earendil-works/pi-coding-agent'
+import { formatSkillsForPrompt, stripFrontmatter } from '@earendil-works/pi-coding-agent'
 
 const PLAN_SESSION_TYPE = 'plan-session'
 const PLAN_PROMPT_PATH = resolve(dirname(fileURLToPath(import.meta.url)), 'plan.md')
@@ -21,40 +21,62 @@ type PlanSessionData = {
 function systemPromptOptionsToText(systemPromptOptions: BuildSystemPromptOptions): string {
   const lines: string[] = ['']
 
-  if (systemPromptOptions.toolSnippets) {
-    lines.push('Available tools:')
+  // Build tools list based on selected tools.
+  // A tool appears in Available tools only when the caller provides a one-line snippet.
+  const tools = systemPromptOptions.selectedTools || ['read', 'bash', 'edit', 'write']
+
+  const hasBash = tools.includes('bash')
+  const hasGrep = tools.includes('grep')
+  const hasFind = tools.includes('find')
+  const hasLs = tools.includes('ls')
+  const hasRead = tools.includes('read')
+
+  lines.push('Available tools:')
+  if (!systemPromptOptions.toolSnippets) {
+    lines.push('(none)')
+  } else {
     for (const [name, description] of Object.entries(systemPromptOptions.toolSnippets)) {
       lines.push(`- ${name}: ${description}`)
     }
-
-    lines.push('') // Add an empty line after the tools section
-    lines.push(
-      'In addition to the tools above, you may have access to other custom tools depending on the project.'
-    )
-    lines.push('') // Add an empty line after the custom tools note
   }
 
+  lines.push('') // Add an empty line after the tools section
+  lines.push(
+    'In addition to the tools above, you may have access to other custom tools depending on the project.'
+  )
+  lines.push('') // Add an empty line after the custom tools note
+
+  lines.push('Guidelines:')
+  // File exploration guidelines
+  if (hasBash && !hasGrep && !hasFind && !hasLs) {
+    lines.push('- Use bash for file operations like ls, rg, find')
+  }
   if (systemPromptOptions.promptGuidelines) {
-    lines.push('Guidelines:')
     for (const guideline of systemPromptOptions.promptGuidelines) {
-      lines.push(`- ${guideline}`)
+      if (guideline.trim()) {
+        lines.push(`- ${guideline.trim()}`)
+      }
     }
   }
 
-  if (systemPromptOptions.skills) {
-    lines.push('<available_skills>')
-    for (const skill of systemPromptOptions.skills) {
-      if (skill.disableModelInvocation) {
-        continue
-      }
-      lines.push(`  <skill>`)
-      lines.push(`    <name>${skill.name}</name>`)
-      lines.push(`    <description>${skill.description}</description>`)
-      lines.push(`    <location>${skill.baseDir}</location>`)
-      lines.push(`  </skill>`)
+  // Append project context files
+  const contextFiles = systemPromptOptions.contextFiles ?? []
+  if (contextFiles.length > 0) {
+    lines.push('<project_context>')
+    lines.push('Project-specific instructions and guidelines:')
+    for (const { path: filePath, content } of contextFiles) {
+      lines.push(`<project_instructions path="${filePath}">`)
+      lines.push(content)
+      lines.push(`</project_instructions>`)
     }
-    lines.push('</available_skills>')
+    lines.push('</project_context>')
   }
+
+  // Append skills section (only if read tool is available)
+  if (hasRead && systemPromptOptions.skills && systemPromptOptions.skills.length > 0) {
+    lines.push(formatSkillsForPrompt(systemPromptOptions.skills))
+  }
+
   lines.push(`Current date: ${new Date().toISOString().split('T')[0]}`)
   lines.push(`Current working directory: ${process.cwd()}`)
 
