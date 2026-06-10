@@ -79,45 +79,18 @@ export default function (pi: ExtensionAPI) {
             }
           }
 
-          // Calculate context usage from session (handles compaction correctly).
-          // After compaction, tokens are unknown until the next LLM response.
-          const contextUsage = ctx.getContextUsage()
-          const contextWindow = contextUsage?.contextWindow ?? ctx.model?.contextWindow ?? 0
-          const contextPercentValue = contextUsage?.percent ?? 0
-          const contextPercent =
-            contextUsage?.percent !== null ? contextPercentValue.toFixed(1) : '?'
-
           // Build stats line
           const statsParts = []
-          if (totalInput) statsParts.push(`↑${formatTokens(totalInput)}`)
-          if (totalOutput) statsParts.push(`↓${formatTokens(totalOutput)}`)
-          if (totalCacheRead) statsParts.push(`R${formatTokens(totalCacheRead)}`)
-          if (totalCacheWrite) statsParts.push(`W${formatTokens(totalCacheWrite)}`)
-
-          if (statsParts.length > 0) {
-            statsParts.push('•')
-          }
-
-          // Colorize context percentage based on usage
-          let contextPercentStr: string
-          const contextPercentDisplay =
-            contextPercent === '?'
-              ? `?/${formatTokens(contextWindow)}`
-              : `${contextPercent}%/${formatTokens(contextWindow)}`
-          if (contextPercentValue > 90) {
-            contextPercentStr = theme.fg('error', contextPercentDisplay)
-          } else if (contextPercentValue > 70) {
-            contextPercentStr = theme.fg('warning', contextPercentDisplay)
-          } else {
-            contextPercentStr = contextPercentDisplay
-          }
-          statsParts.push(contextPercentStr)
+          statsParts.push(`↑${formatTokens(totalInput)}`)
+          statsParts.push(`↓${formatTokens(totalOutput)}`)
+          statsParts.push(`R${formatTokens(totalCacheRead)}`)
+          statsParts.push(`W${formatTokens(totalCacheWrite)}`)
 
           // Show cost with "(sub)" indicator if using OAuth subscription
           const usingSubscription = ctx.model ? ctx.modelRegistry.isUsingOAuth(ctx.model) : false
           if (totalCost || usingSubscription) {
             statsParts.push('•')
-            const costStr = `$${totalCost.toFixed(3)}${usingSubscription ? ' (sub)' : ''}`
+            const costStr = `$${totalCost.toFixed(3)}`
             statsParts.push(costStr)
           }
 

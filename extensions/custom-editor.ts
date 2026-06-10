@@ -1,5 +1,10 @@
 import type { Model } from '@earendil-works/pi-ai'
-import type { ExtensionAPI, KeybindingsManager } from '@earendil-works/pi-coding-agent'
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  KeybindingsManager,
+  Theme,
+} from '@earendil-works/pi-coding-agent'
 import type { EditorTheme, TUI } from '@earendil-works/pi-tui'
 import { CustomEditor } from '@earendil-works/pi-coding-agent'
 import { visibleWidth } from '@earendil-works/pi-tui'
@@ -20,10 +25,15 @@ class BorderStatusEditor extends CustomEditor {
     provider: '',
   }
   thinking: string = 'off'
+  private contextWindowStr: string = ''
+  private tokenUsedStr: string = ''
+  private contextWindow: number = 0
+  private tokensUsed: number = 0
 
   constructor(
     tui: TUI,
     private editorTheme: EditorTheme,
+    private globalTheme: Theme,
     keybindings: KeybindingsManager
   ) {
     super(tui, editorTheme, keybindings)
@@ -63,6 +73,37 @@ class BorderStatusEditor extends CustomEditor {
     return lines.findLastIndex(line => line.includes(this.borderPart))
   }
 
+  private formatTokens(count: number): string {
+    if (count < 1000) return count.toString()
+    if (count < 10000) return `${(count / 1000).toFixed(1)}k`
+    if (count < 1000000) return `${Math.round(count / 1000)}k`
+    if (count < 10000000) return `${(count / 1000000).toFixed(1)}M`
+    return `${Math.round(count / 1000000)}M`
+  }
+
+  setUsage(data: { contextWindow: number; tokensUsed: number }) {
+    this.contextWindow = data.contextWindow
+    this.tokensUsed = data.tokensUsed
+    this.contextWindowStr = this.formatTokens(data.contextWindow)
+    this.tokenUsedStr = this.formatTokens(data.tokensUsed)
+  }
+
+  getUsage(): {
+    percentage: number
+    contextWindow: number
+    tokensUsed: number
+    tokensUsedStr: string
+    contextWindowStr: string
+  } {
+    return {
+      percentage: this.contextWindow > 0 ? (this.tokensUsed / this.contextWindow) * 100 : 0,
+      contextWindow: this.contextWindow,
+      tokensUsed: this.tokensUsed,
+      tokensUsedStr: this.tokenUsedStr,
+      contextWindowStr: this.contextWindowStr,
+    }
+  }
+
   render(width: number): string[] {
     const innerWidth = Math.max(1, width - this.prefix.length - this.suffix.length)
 
@@ -79,13 +120,27 @@ class BorderStatusEditor extends CustomEditor {
     lines.splice(this.getFirstLineIndex(lines) + 1, 0, '')
 
     // Insert infos above the bottom border
-    lines.splice(
-      this.getLastLineIndex(lines),
-      0,
-      '',
-      `${this.model.name.toUpperCase()}${this.borderColor(this.thinking !== 'off' ? `  ${this.thinking}` : '')} `,
-      ''
+    const model = this.model.name.toUpperCase()
+    const thinking = this.borderColor(this.thinking !== 'off' ? `  ${this.thinking}` : '')
+    const leftPart = `${model}${thinking}`
+
+    const usage = this.getUsage()
+    const context = `${usage.tokensUsedStr}/${usage.contextWindowStr} (${Math.floor(usage.percentage)}%)`
+    let colorizedUsage: string
+    const percentageValue = Math.floor(usage.percentage)
+    if (percentageValue >= 90) {
+      colorizedUsage = this.globalTheme.fg('error', `${context}`)
+    } else if (percentageValue >= 70) {
+      colorizedUsage = this.globalTheme.fg('warning', `${context}`)
+    } else {
+      colorizedUsage = this.globalTheme.fg('dim', `${context}`)
+    }
+    const rightPart = `${colorizedUsage}`
+
+    const space = ' '.repeat(
+      Math.max(0, innerWidth - visibleWidth(leftPart) - visibleWidth(rightPart))
     )
+    lines.splice(this.getLastLineIndex(lines), 0, '', `${leftPart}${space}${rightPart}`, '')
 
     const firstLineIdx = this.getFirstLineIndex(lines)
     const lastLineIdx = this.getLastLineIndex(lines)
@@ -124,6 +179,16 @@ export default function (pi: ExtensionAPI) {
     editor.refresh()
   })
 
+  function setContextUsage(ctx: ExtensionContext) {
+    if (!editor) return
+
+    const contextUsage = ctx.getContextUsage()
+    editor.setUsage({
+      contextWindow: contextUsage?.contextWindow ?? ctx.model?.contextWindow ?? 0,
+      tokensUsed: contextUsage?.tokens ?? 0,
+    })
+  }
+
   pi.on('thinking_level_select', event => {
     if (!editor) return
 
@@ -131,14 +196,22 @@ export default function (pi: ExtensionAPI) {
     editor.refresh()
   })
 
+  pi.on('turn_end', (_event, ctx) => {
+    if (!editor) return
+
+    setContextUsage(ctx)
+    editor?.refresh()
+  })
+
   pi.on('session_start', (_event, ctx) => {
     if (!ctx.hasUI) return
 
     ctx.ui.setEditorComponent((tui, theme, keybindings) => {
-      editor = new BorderStatusEditor(tui, theme, keybindings)
+      editor = new BorderStatusEditor(tui, theme, ctx.ui.theme, keybindings)
       editor.model.name = ctx.model?.id ?? 'N/A'
       editor.model.provider = ctx.model?.provider ?? '-'
       editor.thinking = pi.getThinkingLevel()
+      setContextUsage(ctx)
       editor.refresh()
 
       return editor
