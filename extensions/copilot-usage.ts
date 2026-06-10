@@ -204,12 +204,12 @@ export default function (pi: ExtensionAPI) {
     },
   })
 
-  pi.on('session_start', async (_event, ctx) => {
+  pi.on('session_start', (_event, ctx) => {
     setStatus(ctx, {
       type: 'loading',
       details: 'loading…',
     })
-    await refresh(ctx, false)
+    void refresh(ctx, false)
 
     if (interval) clearInterval(interval)
     interval = setInterval(() => {
@@ -217,15 +217,15 @@ export default function (pi: ExtensionAPI) {
     }, REFRESH_INTERVAL_MS)
   })
 
-  pi.on('input', async (_event, ctx) => {
-    await refresh(ctx)
+  pi.on('input', (_event, ctx) => {
+    void refresh(ctx)
   })
 
-  pi.on('turn_end', async (_event, ctx) => {
-    await refresh(ctx)
+  pi.on('turn_end', (_event, ctx) => {
+    void refresh(ctx)
   })
 
-  pi.on('session_shutdown', async () => {
+  pi.on('session_shutdown', () => {
     if (interval) {
       clearInterval(interval)
       interval = undefined
