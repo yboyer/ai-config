@@ -139,21 +139,21 @@ function formatStatusText(theme: Theme, state: UsageState): string {
   }
 
   if (state.entitlement === Infinity) {
-    return theme.fg('text', `${prefix}${formatNumber(state.entitlement)}`)
+    return theme.fg('text', `${prefix}${state.entitlement}`)
   }
 
   let percentageStr: string
   if (state.percentage >= 90) {
     percentageStr = theme.fg('error', '100%')
   } else if (state.percentage >= 70) {
-    percentageStr = theme.fg('warning', `${formatNumber(state.percentage)}%`)
+    percentageStr = theme.fg('warning', `${state.percentage}%`)
   } else {
-    percentageStr = `${formatNumber(state.percentage)}%`
+    percentageStr = `${state.percentage}%`
   }
 
   return theme.fg(
     'text',
-    `${prefix}${percentageStr} ${theme.fg('dim', `(${formatNumber(state.used)}/${formatNumber(state.entitlement)}${state.overage ? '+' : ''})`)}`
+    `${prefix}${percentageStr} ${theme.fg('dim', `(${state.used}/${state.entitlement}${state.overage ? '+' : ''})`)}`
   )
 }
 
