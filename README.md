@@ -17,21 +17,33 @@ Pi package with custom setup:
 pi install git:github.com/yboyer/pi
 ```
 
-Or from local clone:
+## Skills via `npx skills`
+
+This repo is compatible with [`npx skills`](https://github.com/vercel-labs/skills) because skills live in `skills/`.
+
+Example:
 
 ```bash
-pi install /absolute/path/to/pi
+npx skills add github.com/yboyer/pi
 ```
 
-## settings.json
+## Personal setup
 
-For full personal setup, use this `settings.json`:
+### `settings.json`
 
 ```json
 {
   "theme": "one-dark-pro",
+  "hideThinkingBlock": false,
+  "showHardwareCursor": false,
   "quietStartup": true,
+  "compaction": {
+    "enabled": false
+  },
+  "autocompleteMaxVisible": 7,
+  "treeFilterMode": "default"
   "packages": [
+    "npm:pi-tool-display",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-mcp-adapter",
     "git:github.com/yboyer/pi",
@@ -52,12 +64,33 @@ For full personal setup, use this `settings.json`:
 }
 ```
 
-## Skills via `npx skills`
+### `npm:pi-tool-display`
 
-This repo is compatible with [`npx skills`](https://github.com/vercel-labs/skills) because skills live in `skills/`.
-
-Example:
-
-```bash
-npx skills add github.com/yboyer/pi
+```json
+{
+  "registerToolOverrides": {
+    "read": true,
+    "grep": true,
+    "find": true,
+    "ls": true,
+    "bash": true,
+    "edit": true,
+    "write": true
+  },
+  "enableNativeUserMessageBox": false,
+  "readOutputMode": "hidden",
+  "searchOutputMode": "hidden",
+  "mcpOutputMode": "hidden",
+  "previewLines": 8,
+  "expandedPreviewMaxLines": 4000,
+  "bashOutputMode": "opencode",
+  "bashCollapsedLines": 0,
+  "diffViewMode": "auto",
+  "diffIndicatorMode": "bars",
+  "diffSplitMinWidth": 120,
+  "diffCollapsedLines": 24,
+  "diffWordWrap": true,
+  "showTruncationHints": false,
+  "showRtkCompactionHints": false
+}
 ```
