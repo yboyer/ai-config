@@ -227,8 +227,10 @@ export default function (pi: ExtensionAPI) {
       sessionState.theme = ctx.ui.theme
 
       const line = await gitStatus.getGitStatusLine({ cwd: ctx.cwd })
+      if (interval === undefined) return
       ctx.ui.setStatus(WIDGET_ID, line)
     } catch {
+      if (interval === undefined) return
       ctx.ui.setStatus(WIDGET_ID, undefined)
     }
   }
