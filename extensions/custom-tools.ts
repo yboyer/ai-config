@@ -7,7 +7,7 @@ import { Box, Image, Text, truncateToWidth, visibleWidth } from '@earendil-works
 
 function toRelative(cwd: string, filePath: string) {
   const relative = path.relative(cwd, filePath)
-  return `./${relative && !relative.startsWith('..') && !path.isAbsolute(relative) ? relative : filePath}`
+  return `${relative && !relative.startsWith('..') && !path.isAbsolute(relative) ? relative : filePath}`
 }
 
 function statusPrefix(theme: Theme, state: { isError: boolean; isPartial: boolean }) {
@@ -18,6 +18,35 @@ function statusPrefix(theme: Theme, state: { isError: boolean; isPartial: boolea
     return theme.fg('warning', '…')
   }
   return theme.fg('success', '✓')
+}
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
+function truncateFromStartToWidth(text: string, maxWidth: number, ellipsis = '...') {
+  if (maxWidth <= 0) return ''
+
+  const textWidth = visibleWidth(text)
+  if (textWidth <= maxWidth) return text
+
+  const ellipsisWidth = visibleWidth(ellipsis)
+  if (ellipsisWidth >= maxWidth) {
+    return truncateToWidth(ellipsis, maxWidth, '')
+  }
+
+  const segments = Array.from(graphemeSegmenter.segment(text), part => part.segment)
+  const targetWidth = maxWidth - ellipsisWidth
+  let tail = ''
+  let tailWidth = 0
+
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const segment = segments[i]!
+    const segmentWidth = visibleWidth(segment)
+    if (tailWidth + segmentWidth > targetWidth) break
+    tail = `${segment}${tail}`
+    tailWidth += segmentWidth
+  }
+
+  return `${ellipsis}${tail}`
 }
 
 function renderCall(
@@ -36,12 +65,11 @@ function renderCall(
   const container = new Box(0, 0)
 
   const prefix = `${statusPrefix(theme, ctx)} ${tool} `
-  const prefixWidth = visibleWidth(prefix)
 
   container.addChild({
     invalidate: () => null,
     render(width) {
-      return [`${prefix}${truncateToWidth(data.summary, width - prefixWidth)}`]
+      return [truncateToWidth(`${prefix}${data.summary}`, width)]
     },
   })
 
@@ -59,18 +87,30 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     ...originalRead,
     renderShell: 'self',
-    renderCall: (args, theme, ctx) =>
-      renderCall(
-        {
-          name: 'read',
-          summary:
-            theme.fg('muted', toRelative(cwd, args.path)) +
-            (args.offset ? theme.fg('syntaxNumber', `:${args.offset}`) : '') +
-            (args.limit ? theme.fg('syntaxNumber', `-${args.limit}`) : ''),
+    renderCall(args, theme, ctx) {
+      const tool = theme.fg('toolTitle', theme.bold('READ'))
+      const prefix = `${statusPrefix(theme, ctx)} ${tool} `
+      const prefixWidth = visibleWidth(prefix)
+
+      const relativePath = toRelative(cwd, args.path)
+      const suffix = `${args.offset ? `:${args.offset}` : ''}${args.limit ? `-${args.limit}` : ''}`
+
+      const container = new Box(0, 0)
+      container.addChild({
+        invalidate: () => null,
+        render(width) {
+          const availableWidth = width - prefixWidth
+          const suffixWidth = visibleWidth(suffix)
+
+          const pathWidth = availableWidth - suffixWidth
+          const truncatedPath = truncateFromStartToWidth(relativePath, pathWidth)
+
+          return [`${prefix}${theme.fg('muted', truncatedPath)}${theme.fg('syntaxNumber', suffix)}`]
         },
-        theme,
-        ctx
-      ),
+      })
+
+      return container
+    },
 
     renderResult(result, { expanded, isPartial }, theme) {
       if (isPartial) return new Text(theme.fg('warning', 'Reading...'), 0, 0)
