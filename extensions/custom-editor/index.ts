@@ -9,6 +9,8 @@ import type { EditorTheme, TUI } from '@earendil-works/pi-tui'
 import { CustomEditor } from '@earendil-works/pi-coding-agent'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
+import { splitRenderedEditor } from './editor-autocomplete'
+
 function colorBg(rgb: [number, number, number], text: string): string {
   const bg = `\x1b[48;2;${rgb[0]};${rgb[1]};${rgb[2]}m`
   const reset = '\x1b[0m'
@@ -19,7 +21,6 @@ function colorBg(rgb: [number, number, number], text: string): string {
 class BorderStatusEditor extends CustomEditor {
   private prefix = '▎ '
   private suffix = ' '
-  private borderPart = '─'
   model: Pick<Model<'any'>, 'name' | 'provider'> = {
     name: '',
     provider: '',
@@ -60,19 +61,6 @@ class BorderStatusEditor extends CustomEditor {
     this.tui.requestRender()
   }
 
-  private padAnsi(line: string, width: number): string {
-    const w = visibleWidth(line)
-    return line + ' '.repeat(width - w)
-  }
-
-  private getFirstLineIndex(lines: string[]): number {
-    return lines.findIndex(line => line.includes(this.borderPart))
-  }
-
-  private getLastLineIndex(lines: string[]): number {
-    return lines.findLastIndex(line => line.includes(this.borderPart))
-  }
-
   private formatTokens(count: number): string {
     if (count < 1000) return count.toString()
     if (count < 10000) return `${(count / 1000).toFixed(1)}k`
@@ -88,46 +76,16 @@ class BorderStatusEditor extends CustomEditor {
     this.tokenUsedStr = this.formatTokens(data.tokensUsed)
   }
 
-  getUsage(): {
-    percentage: number
-    contextWindow: number
-    tokensUsed: number
-    tokensUsedStr: string
-    contextWindowStr: string
-  } {
-    return {
-      percentage: this.contextWindow > 0 ? (this.tokensUsed / this.contextWindow) * 100 : 0,
-      contextWindow: this.contextWindow,
-      tokensUsed: this.tokensUsed,
-      tokensUsedStr: this.tokenUsedStr,
-      contextWindowStr: this.contextWindowStr,
-    }
-  }
-
-  render(width: number): string[] {
-    const innerWidth = Math.max(1, width - this.prefix.length - this.suffix.length)
-
-    const lines = super.render(innerWidth)
-    if (lines.length < 2) return lines
-
-    // Style input line with command highlight
-    const inputLineIdx = lines.findIndex(line => !line.includes(this.borderPart))
-    if (inputLineIdx >= 0 && inputLineIdx < lines.length) {
-      lines[inputLineIdx] = this.formatInputWithCommandHighlight(lines[inputLineIdx])
-    }
-
-    // Insert a line below the top border
-    lines.splice(this.getFirstLineIndex(lines) + 1, 0, '')
-
-    // Insert infos above the bottom border
+  private renderMetadata(width: number): string {
     const model = this.model.name.toUpperCase()
     const thinking = this.borderColor(this.thinking !== 'off' ? `  ${this.thinking}` : '')
     const leftPart = `${model}${thinking}`
 
-    const usage = this.getUsage()
-    const context = `${usage.tokensUsedStr}/${usage.contextWindowStr} (${Math.floor(usage.percentage)}%)`
+    const percentage = this.contextWindow > 0 ? (this.tokensUsed / this.contextWindow) * 100 : 0
+
+    const context = `${this.tokenUsedStr}/${this.contextWindowStr} (${Math.floor(percentage)}%)`
     let colorizedUsage: string
-    const percentageValue = Math.floor(usage.percentage)
+    const percentageValue = Math.floor(percentage)
     if (percentageValue >= 90) {
       colorizedUsage = this.globalTheme.fg('error', `${context}`)
     } else if (percentageValue >= 70) {
@@ -137,34 +95,47 @@ class BorderStatusEditor extends CustomEditor {
     }
     const rightPart = `${colorizedUsage}`
 
-    const space = ' '.repeat(
-      Math.max(0, innerWidth - visibleWidth(leftPart) - visibleWidth(rightPart))
-    )
-    lines.splice(this.getLastLineIndex(lines), 0, '', `${leftPart}${space}${rightPart}`, '')
+    const space = ' '.repeat(Math.max(0, width - visibleWidth(leftPart) - visibleWidth(rightPart)))
 
-    const firstLineIdx = this.getFirstLineIndex(lines)
-    const lastLineIdx = this.getLastLineIndex(lines)
-    for (let i = firstLineIdx + 1; i < lastLineIdx; i++) {
-      lines[i] = colorBg(
-        [29, 31, 35],
-        this.padAnsi(this.borderColor(this.prefix) + lines[i] + this.suffix, width)
-      )
+    return `${leftPart}${space}${rightPart}`
+  }
+
+  private renderInput(lines: string[]): string[] {
+    const [firstLine, ...others] = lines
+
+    return [this.formatInputWithCommandHighlight(firstLine), ...others]
+  }
+
+  private renderContentRow(line: string, width: number): string {
+    const row = this.borderColor(this.prefix) + line + this.suffix
+    const w = visibleWidth(row)
+
+    return colorBg([29, 31, 35], row + ' '.repeat(width - w))
+  }
+
+  render(width: number): string[] {
+    const innerWidth = Math.max(1, width - this.prefix.length - this.suffix.length)
+
+    const rendered = super.render(innerWidth)
+    if (rendered.length < 2) return rendered
+
+    const { editorFrame, autocompleteLines } = splitRenderedEditor(this, rendered, innerWidth)
+
+    const editorLines = editorFrame.slice(1, -1)
+    const inputLines = this.renderInput(editorLines)
+    const metadata = this.renderMetadata(innerWidth)
+    const lines = ['', ...inputLines, '', metadata, '']
+    const hasSuggestions = autocompleteLines.length > 0
+    const rows = lines.map(line => this.renderContentRow(line, width))
+
+    rows.push('')
+
+    if (hasSuggestions) {
+      rows.push(...autocompleteLines)
+      rows.push('')
     }
 
-    const hasDropDown = this.getLastLineIndex(lines) !== lines.length - 1
-
-    // Insert new line below the bottom border
-    lines.splice(this.getLastLineIndex(lines) + 1, 0, '')
-
-    // Remove the top and bottom borders
-    lines.splice(this.getFirstLineIndex(lines), 1)
-    lines.splice(this.getLastLineIndex(lines), 1)
-
-    if (hasDropDown) {
-      lines.push('')
-    }
-
-    return lines
+    return rows
   }
 }
 
