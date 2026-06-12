@@ -1,4 +1,4 @@
-# @yboyer/pi
+# @yboyer/pi-config
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/yboyer/pi/master/.assets/pi.png" width="768">
@@ -14,7 +14,7 @@ Pi package with custom setup:
 ## Install
 
 ```bash
-pi install git:github.com/yboyer/pi
+pi install git:github.com/yboyer/pi-config
 ```
 
 ## Skills via `npx skills`
@@ -24,7 +24,7 @@ This repo is compatible with [`npx skills`](https://github.com/vercel-labs/skill
 Example:
 
 ```bash
-npx skills add github.com/yboyer/pi
+npx skills add github.com/yboyer/pi-config
 ```
 
 ## Personal setup
@@ -46,7 +46,7 @@ npx skills add github.com/yboyer/pi
     "npm:pi-tool-display",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-mcp-adapter",
-    "git:github.com/yboyer/pi",
+    "git:github.com/yboyer/pi-config",
     {
       "source": "npm:context-mode",
       "skills": [
