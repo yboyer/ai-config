@@ -18,6 +18,8 @@ function colorBg(rgb: [number, number, number], text: string): string {
   return `${bg}${keepBgAcrossResets}${reset}`
 }
 
+type ThinkingLevel = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+
 class BorderStatusEditor extends CustomEditor {
   private prefix = '▎ '
   private suffix = ' '
@@ -25,7 +27,7 @@ class BorderStatusEditor extends CustomEditor {
     name: '',
     provider: '',
   }
-  thinking: string = 'off'
+  thinking: ThinkingLevel = 'off'
   private contextWindowStr: string = ''
   private tokenUsedStr: string = ''
   private contextWindow: number = 0
@@ -76,9 +78,13 @@ class BorderStatusEditor extends CustomEditor {
     this.tokenUsedStr = this.formatTokens(data.tokensUsed)
   }
 
+  private thinkingColor(text: string): string {
+    return this.globalTheme.getThinkingBorderColor(this.thinking)(text)
+  }
+
   private renderMetadata(width: number): string {
     const model = this.model.name.toUpperCase()
-    const thinking = this.borderColor(this.thinking !== 'off' ? `  ${this.thinking}` : '')
+    const thinking = this.thinkingColor(this.thinking !== 'off' ? `  ${this.thinking}` : '')
     const leftPart = `${model}${thinking}`
 
     const percentage = this.contextWindow > 0 ? (this.tokensUsed / this.contextWindow) * 100 : 0
