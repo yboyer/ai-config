@@ -69,10 +69,10 @@ npx skills add github.com/yboyer/pi-config
 ```json
 {
   "registerToolOverrides": {
-    "read": true,
-    "grep": true,
-    "find": true,
-    "ls": true,
+    "read": false,
+    "grep": false,
+    "find": false,
+    "ls": false,
     "bash": true,
     "edit": true,
     "write": true
@@ -84,7 +84,7 @@ npx skills add github.com/yboyer/pi-config
   "previewLines": 8,
   "expandedPreviewMaxLines": 4000,
   "bashOutputMode": "opencode",
-  "bashCollapsedLines": 0,
+  "bashCollapsedLines": 5,
   "diffViewMode": "auto",
   "diffIndicatorMode": "bars",
   "diffSplitMinWidth": 120,
