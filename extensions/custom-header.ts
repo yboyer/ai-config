@@ -145,7 +145,7 @@ class WelcomeCard extends OverlayComponent {
   private projectName: string
   private sessionName?: string
 
-  static maxWidth = 80
+  static maxWidth = 100
 
   // private PI_LOGO = [
   //   //
