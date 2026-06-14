@@ -18,11 +18,19 @@ function colorBg(rgb: [number, number, number], text: string): string {
   return `${bg}${keepBgAcrossResets}${reset}`
 }
 
+function colorFg(rgb: [number, number, number], text: string): string {
+  const fg = `\x1b[38;2;${rgb[0]};${rgb[1]};${rgb[2]}m`
+  const reset = '\x1b[0m'
+  const keepFgAcrossResets = text.split(reset).join(`${reset}${fg}`)
+  return `${fg}${keepFgAcrossResets}${reset}`
+}
+
 type ThinkingLevel = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
 
 class BorderStatusEditor extends CustomEditor {
   private prefix = '▎ '
   private suffix = ' '
+  private atFileRegex = /(^|[ \t])(@[^\s]*)/g
   model: Pick<Model<'any'>, 'name' | 'provider'> = {
     name: '',
     provider: '',
@@ -40,6 +48,12 @@ class BorderStatusEditor extends CustomEditor {
     keybindings: KeybindingsManager
   ) {
     super(tui, editorTheme, keybindings)
+  }
+
+  private highlightAtFiles(input: string): string {
+    return input.replace(this.atFileRegex, (_match, prefix: string, taggedPath: string) => {
+      return `${prefix}${colorFg([249, 157, 29], taggedPath)}`
+    })
   }
 
   private formatInputWithCommandHighlight(input: string): string {
@@ -107,9 +121,11 @@ class BorderStatusEditor extends CustomEditor {
   }
 
   private renderInput(lines: string[]): string[] {
-    const [firstLine, ...others] = lines
+    const [firstLine = '', ...others] = lines
 
-    return [this.formatInputWithCommandHighlight(firstLine), ...others]
+    return [this.formatInputWithCommandHighlight(firstLine), ...others].map(line =>
+      this.highlightAtFiles(line)
+    )
   }
 
   private renderContentRow(line: string, width: number): string {
