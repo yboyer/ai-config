@@ -9,13 +9,12 @@
     "purple": "#C678DC",
     "cyan": "#56b6c2",
     "orange": "#DB975C",
-
     "bg": "#282c34",
     "panel": "#292E37",
     "panelAlt": "#1b1d23",
     "panelSoft": "#888F9E",
     "border": "#5F87FF",
-    "text": "#abb2bf",
+    "text": "",
     "dim": "#868E9A"
   },
   "colors": {
@@ -30,7 +29,6 @@
     "dim": "dim",
     "text": "text",
     "thinkingText": "dim",
-
     "mdCode": "orange",
     "mdCodeBlock": "text",
     "mdCodeBlockBorder": "text",
@@ -41,7 +39,6 @@
     "mdListBullet": "yellow",
     "mdQuote": "dim",
     "mdQuoteBorder": "border",
-
     "selectedBg": "panelSoft",
     "userMessageBg": "panel",
     "userMessageText": "text",
@@ -53,28 +50,24 @@
     "toolPendingBg": "bg",
     "toolSuccessBg": "bg",
     "toolTitle": "text",
-
     "toolDiffAdded": "green",
     "toolDiffContext": "dim",
     "toolDiffRemoved": "red",
-
     "syntaxComment": "dim",
     "syntaxFunction": "blue",
     "syntaxKeyword": "purple",
     "syntaxNumber": "orange",
     "syntaxOperator": "cyan",
     "syntaxPunctuation": "purple",
-    "syntaxString": "text",
+    "syntaxString": "green",
     "syntaxType": "yellow",
     "syntaxVariable": "red",
-
     "thinkingHigh": "#DC6DE8",
     "thinkingLow": "#6DA1E8",
     "thinkingMedium": "#8E6DE8",
     "thinkingMinimal": "text",
     "thinkingOff": "dim",
     "thinkingXhigh": "#E86D8C",
-
     "bashMode": "yellow"
   },
   "export": {
