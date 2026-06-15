@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
 import type {
   BuildSystemPromptOptions,
@@ -11,7 +10,7 @@ import type {
 import { formatSkillsForPrompt, stripFrontmatter } from '@earendil-works/pi-coding-agent'
 
 const PLAN_SESSION_TYPE = 'plan-session'
-const PLAN_PROMPT_PATH = resolve(dirname(fileURLToPath(import.meta.url)), 'plan.md')
+const PLAN_PROMPT_PATH = path.join(__dirname, '..', 'agents', 'plan.md')
 
 type PlanSessionData = {
   sourcePath: string
