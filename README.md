@@ -1,21 +1,19 @@
 # @yboyer/ai-config
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/yboyer/pi/master/.assets/pi.png" width="768">
-</p>
+Package with custom setup:
 
-Pi package with custom setup:
-
-- custom extensions
-- custom skills
-- custom prompt templates
-- custom theme
+- custom skills, prompts, agents
+- custom pi extensions and theme
 
 ## Harness install
 
 Package not published on npm. Install from git only.
 
 ### Pi
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/yboyer/ai-config/master/.assets/pi.png" width="768">
+</p>
 
 ```bash
 pi install git:github.com/yboyer/ai-config

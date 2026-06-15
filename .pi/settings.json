@@ -6,7 +6,7 @@
     "../skills"
   ],
   "prompts": [
-    "../prompts"
+    "../commands"
   ],
   "themes": [
     "../themes"
