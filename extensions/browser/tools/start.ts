@@ -20,10 +20,12 @@ if (process.argv[2] && process.argv[2] !== '--profile') {
   process.exit(1)
 }
 
-// Wait a bit for processes to fully die
-await new Promise(r => setTimeout(r, 1000))
-
 const scriptDir = dirname(fileURLToPath(import.meta.url))
+
+execSync('npx -y @puppeteer/browsers install chrome@stable', {
+  stdio: 'inherit',
+  cwd: scriptDir,
+})
 
 function resolveChromeForTestingBinary() {
   const matches = execFileSync(
@@ -45,7 +47,7 @@ function resolveChromeForTestingBinary() {
 
   if (!binary) {
     console.error('✗ Google for Testing not found in ./chrome')
-    console.error('  Run: npx @puppeteer/browsers install chrome@stable')
+    console.error('  Run: npx @puppeteer/browsers -y install chrome@stable')
     process.exit(1)
   }
 
@@ -53,6 +55,61 @@ function resolveChromeForTestingBinary() {
 }
 
 const chromeBinary = resolveChromeForTestingBinary()
+
+function hasChromeProcess(bin: string) {
+  try {
+    execSync(`pgrep -f ${JSON.stringify(bin)}`, { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
+
+function getDebugPortPids() {
+  try {
+    return execSync('lsof -ti tcp:9222', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+function killExistingChrome(bin: string) {
+  try {
+    execSync(`pkill -f ${JSON.stringify(bin)}`, { stdio: 'ignore' })
+  } catch {
+    // Ignore when no matching process exists.
+  }
+
+  const pids = getDebugPortPids()
+  if (pids.length > 0) {
+    try {
+      execSync(`kill ${pids.join(' ')}`, { stdio: 'ignore' })
+    } catch {
+      // Ignore kill race.
+    }
+  }
+}
+
+async function waitForChromeShutdown(bin: string) {
+  for (let i = 0; i < 40; i++) {
+    if (!hasChromeProcess(bin) && getDebugPortPids().length === 0) {
+      return
+    }
+    await new Promise(r => setTimeout(r, 250))
+  }
+
+  console.error('✗ Failed to stop existing Chrome on :9222')
+  process.exit(1)
+}
+
+killExistingChrome(chromeBinary)
+await waitForChromeShutdown(chromeBinary)
 
 const userDataDir = join(process.env.HOME!, '.cache/browser-tools-ai')
 
