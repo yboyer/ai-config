@@ -1,4 +1,4 @@
-# @yboyer/pi-config
+# @yboyer/ai-config
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/yboyer/pi/master/.assets/pi.png" width="768">
@@ -11,11 +11,19 @@ Pi package with custom setup:
 - custom prompt templates
 - custom theme
 
-## Install
+## Harness install
+
+Package not published on npm. Install from git only.
+
+### Pi
 
 ```bash
-pi install git:github.com/yboyer/pi-config
+pi install git:github.com/yboyer/ai-config
 ```
+
+### VSCode
+
+Use the git URL to install the extension directly from GitHub: <https://github.com/yboyer/ai-config.git>
 
 ## Skills via `npx skills`
 
@@ -24,10 +32,10 @@ This repo is compatible with [`npx skills`](https://github.com/vercel-labs/skill
 Example:
 
 ```bash
-npx skills add github.com/yboyer/pi-config
+npx skills add github.com/yboyer/ai-config
 ```
 
-## Personal setup
+## Pi personal setup
 
 ### `settings.json`
 
@@ -46,7 +54,7 @@ npx skills add github.com/yboyer/pi-config
     "npm:pi-tool-display",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-mcp-adapter",
-    "git:github.com/yboyer/pi-config",
+    "git:github.com/yboyer/ai-config",
     {
       "source": "npm:context-mode",
       "skills": [

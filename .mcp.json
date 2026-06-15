@@ -1,10 +1,15 @@
 {
+	"settings": {
+		"autoAuth": true,
+		"toolPrefix": "server"
+	},
 	"mcpServers": {
 		"context7": {
 			"type": "http",
 			"url": "https://mcp.context7.com/mcp/oauth"
 		},
 		"eas": {
+			"type": "http",
 			"url": "https://mcp.expo.dev/mcp"
 		}
 	}
