@@ -13,7 +13,7 @@
   ],
   "packages": [
     {
-      "source": "git:github.com/yboyer/pi-config",
+      "source": "git:github.com/yboyer/ai-config",
       "extensions": [],
       "skills": [],
       "prompts": [],
