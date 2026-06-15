@@ -1,31 +1,34 @@
 {
-  "name": "@yboyer/pi-config",
+  "name": "@yboyer/ai-config",
   "version": "0.1.0",
   "private": false,
-  "description": "Pi package with custom extensions, skills, and prompt templates.",
+  "description": "AI package with custom pi-extensions, skills, prompts and agents templates.",
   "license": "Apache-2.0",
   "type": "module",
   "keywords": [
     "pi-package",
     "pi",
+    "ai",
     "extensions",
     "skills",
+    "agents",
     "prompts",
     "themes"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yboyer/pi.git"
+    "url": "git+https://github.com/yboyer/ai-config.git"
   },
-  "homepage": "https://github.com/yboyer/pi",
+  "homepage": "https://github.com/yboyer/ai-config",
   "bugs": {
-    "url": "https://github.com/yboyer/pi/issues"
+    "url": "https://github.com/yboyer/ai-config/issues"
   },
   "files": [
     "extensions",
     "skills",
     "themes",
     "prompts",
+    "agents",
     "README.md"
   ],
   "scripts": {
