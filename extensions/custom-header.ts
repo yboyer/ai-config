@@ -65,6 +65,14 @@ function toGradient(lines: readonly string[], phase = 0, shine?: ShineConfig): s
   })
 }
 
+function centerLines(lines: readonly string[], width: number): string[] {
+  return lines.map(line => {
+    if (!line) return line
+    const padding = Math.max(0, Math.floor((width - visibleWidth(line)) / 2))
+    return `${' '.repeat(padding)}${line}`
+  })
+}
+
 class OverlayComponent {
   constructor(protected theme: Theme) {}
 
@@ -431,7 +439,7 @@ export default function (pi: ExtensionAPI) {
           return [
             // Add padding lines
             '',
-            ...card!.render(width),
+            ...centerLines(card!.render(width), width),
             '',
           ]
         },
