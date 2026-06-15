@@ -49,10 +49,12 @@ npx skills add github.com/yboyer/ai-config
   "autocompleteMaxVisible": 7,
   "treeFilterMode": "default"
   "packages": [
-    "npm:pi-tool-display",
-    "npm:@juicesharp/rpiv-ask-user-question",
-    "npm:pi-mcp-adapter",
     "git:github.com/yboyer/ai-config",
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:@tintinweb/pi-subagents",
+    "npm:@tintinweb/pi-tasks",
+    "npm:pi-mcp-adapter",
+    "npm:pi-tool-display",
     {
       "source": "npm:context-mode",
       "skills": [
