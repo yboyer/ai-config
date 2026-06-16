@@ -30,16 +30,16 @@ type ThinkingLevel = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
 class BorderStatusEditor extends CustomEditor {
   private prefix = '▎ '
   private suffix = ' '
-  private atFileRegex = /(^|[ \t])(@[^\s]*)/g
+  private atFileRegex = /(^|[ \t])(@"[^"]*"|@[^\s"]+)/g
   model: Pick<Model<'any'>, 'name' | 'provider'> = {
     name: '',
     provider: '',
   }
   thinking: ThinkingLevel = 'off'
-  private contextWindowStr: string = ''
-  private tokenUsedStr: string = ''
-  private contextWindow: number = 0
-  private tokensUsed: number = 0
+  private contextWindowStr = ''
+  private tokenUsedStr = ''
+  private contextWindow = 0
+  private tokensUsed = 0
 
   constructor(
     tui: TUI,
@@ -118,11 +118,11 @@ class BorderStatusEditor extends CustomEditor {
     let colorizedUsage: string
     const percentageValue = Math.floor(percentage)
     if (percentageValue >= 90) {
-      colorizedUsage = this.globalTheme.fg('error', `${context}`)
+      colorizedUsage = this.globalTheme.fg('error', context)
     } else if (percentageValue >= 70) {
-      colorizedUsage = this.globalTheme.fg('warning', `${context}`)
+      colorizedUsage = this.globalTheme.fg('warning', context)
     } else {
-      colorizedUsage = this.globalTheme.fg('dim', `${context}`)
+      colorizedUsage = this.globalTheme.fg('dim', context)
     }
     const rightPart = `${colorizedUsage}`
 
@@ -141,9 +141,9 @@ class BorderStatusEditor extends CustomEditor {
 
   private renderContentRow(line: string, width: number): string {
     const row = this.borderColor(this.prefix) + line + this.suffix
-    const w = visibleWidth(row)
+    const rowWidth = visibleWidth(row)
 
-    return colorBg([29, 31, 35], row + ' '.repeat(width - w))
+    return colorBg([29, 31, 35], row + ' '.repeat(width - rowWidth))
   }
 
   render(width: number): string[] {
