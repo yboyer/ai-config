@@ -1,26 +1,19 @@
 #!/usr/bin/env node
 
-/** biome-ignore-all lint/suspicious/noConsole: This script is intended to be run from the command line and uses console.log for user feedback. */
+/** biome-ignore-all lint/suspicious/noConsole: This script is intended to be run from command line and uses console.log for user feedback. */
 
 import { execFileSync, execSync, spawn } from 'node:child_process'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import puppeteer from 'puppeteer-core'
 
-const useProfile = process.argv[2] === '--profile'
-
-if (process.argv[2] && process.argv[2] !== '--profile') {
-  console.log('Usage: start.ts [--profile]')
-  console.log('\nOptions:')
-  console.log('  --profile  Copy your default Chrome profile (cookies, logins)')
-  console.log('\nExamples:')
-  console.log('  start.ts            # Start with fresh profile')
-  console.log('  start.ts --profile  # Start with your Chrome profile')
-  process.exit(1)
+export interface StartBrowserOptions {
+  useProfile?: boolean
 }
 
-const scriptDir = dirname(fileURLToPath(import.meta.url))
+const scriptPath = fileURLToPath(import.meta.url)
+const scriptDir = dirname(scriptPath)
 
 function findChromeForTestingBinary() {
   try {
@@ -58,15 +51,11 @@ function ensureChromeForTestingInstalled() {
 
   const installedBinary = findChromeForTestingBinary()
   if (!installedBinary) {
-    console.error('✗ Google for Testing not found in ./chrome')
-    console.error('  Run: npx -y @puppeteer/browsers install chrome@stable')
-    process.exit(1)
+    throw new Error('Google for Testing not found in ./chrome')
   }
 
   return installedBinary
 }
-
-const chromeBinary = ensureChromeForTestingInstalled()
 
 function hasChromeProcess(bin: string) {
   try {
@@ -116,65 +105,92 @@ async function waitForChromeShutdown(bin: string) {
     await new Promise(r => setTimeout(r, 250))
   }
 
-  console.error('✗ Failed to stop existing Chrome on :9222')
-  process.exit(1)
+  throw new Error('Failed to stop existing Chrome on :9222')
 }
 
-killExistingChrome(chromeBinary)
-await waitForChromeShutdown(chromeBinary)
+function parseArgs(argv: string[]) {
+  const useProfile = argv[0] === '--profile'
 
-const userDataDir = join(process.env.HOME!, '.cache/browser-tools-ai')
-
-// Setup profile directory
-execSync(`mkdir -p ${userDataDir}`, { stdio: 'ignore' })
-
-if (useProfile) {
-  // Sync profile with rsync (much faster on subsequent runs)
-  execSync(
-    `rsync -a --delete "${process.env.HOME}/Library/Application Support/Google/Chrome/" ${userDataDir}/`,
-    { stdio: 'pipe' }
-  )
-
-  // Remove session restore data so old tabs/windows are not reopened
-  execSync(
-    `find ${userDataDir} \
-      \\( -type d -name Sessions -prune -exec rm -rf {} + \\) -o \
-      \\( -type f \\( -name "Current Session" -o -name "Current Tabs" -o -name "Last Session" -o -name "Last Tabs" \\) -delete \\)`,
-    { stdio: 'ignore', shell: '/bin/bash' }
-  )
-}
-
-// Start Chrome in background (detached so Node can exit)
-spawn(
-  chromeBinary,
-  ['--remote-debugging-port=9222', useProfile ? `--user-data-dir=${userDataDir}` : null].filter(
-    el => el !== null
-  ),
-  {
-    detached: true,
-    stdio: 'ignore',
+  if (argv[0] && argv[0] !== '--profile') {
+    throw new Error('Usage: start.ts [--profile]')
   }
-).unref()
 
-// Wait for Chrome to be ready by attempting to connect
-let connected = false
-for (let i = 0; i < 30; i++) {
+  return { useProfile }
+}
+
+function isMainModule() {
+  return Boolean(process.argv[1] && resolve(process.argv[1]) === scriptPath)
+}
+
+export async function startBrowser(options: StartBrowserOptions = {}) {
+  const useProfile = options.useProfile === true
+  const chromeBinary = ensureChromeForTestingInstalled()
+
+  killExistingChrome(chromeBinary)
+  await waitForChromeShutdown(chromeBinary)
+
+  const userDataDir = join(process.env.HOME!, '.cache/browser-tools-ai')
+
+  execSync(`mkdir -p ${userDataDir}`, { stdio: 'ignore' })
+
+  if (useProfile) {
+    execSync(
+      `rsync -a --delete "${process.env.HOME}/Library/Application Support/Google/Chrome/" ${userDataDir}/`,
+      { stdio: 'pipe' }
+    )
+
+    execSync(
+      `find ${userDataDir} \
+        \\( -type d -name Sessions -prune -exec rm -rf {} + \\) -o \
+        \\( -type f \\( -name "Current Session" -o -name "Current Tabs" -o -name "Last Session" -o -name "Last Tabs" \\) -delete \\)`,
+      { stdio: 'ignore', shell: '/bin/bash' }
+    )
+  }
+
+  spawn(
+    chromeBinary,
+    ['--remote-debugging-port=9222', useProfile ? `--user-data-dir=${userDataDir}` : null].filter(
+      el => el !== null
+    ),
+    {
+      detached: true,
+      stdio: 'ignore',
+    }
+  ).unref()
+
+  let connected = false
+  for (let i = 0; i < 30; i++) {
+    try {
+      const browser = await puppeteer.connect({
+        browserURL: 'http://localhost:9222',
+        defaultViewport: null,
+      })
+      await browser.disconnect()
+      connected = true
+      break
+    } catch {
+      await new Promise(r => setTimeout(r, 500))
+    }
+  }
+
+  if (!connected) {
+    throw new Error('Failed to connect to Chrome')
+  }
+
+  return `✓ Google for Testing started on :9222${useProfile ? ' with your profile' : ''}`
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  const { useProfile } = parseArgs(argv)
+  const result = await startBrowser({ useProfile })
+  console.log(result)
+}
+
+if (isMainModule()) {
   try {
-    const browser = await puppeteer.connect({
-      browserURL: 'http://localhost:9222',
-      defaultViewport: null,
-    })
-    await browser.disconnect()
-    connected = true
-    break
-  } catch {
-    await new Promise(r => setTimeout(r, 500))
+    await main()
+  } catch (error) {
+    console.error(`✗ ${error instanceof Error ? error.message : String(error)}`)
+    process.exit(1)
   }
 }
-
-if (!connected) {
-  console.error('✗ Failed to connect to Chrome')
-  process.exit(1)
-}
-
-console.log(`✓ Google for Testing started on :9222${useProfile ? ' with your profile' : ''}`)
