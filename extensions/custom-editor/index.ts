@@ -56,6 +56,17 @@ class BorderStatusEditor extends CustomEditor {
     })
   }
 
+  private applyInlineHighlighting(input: string): string {
+    return input
+      .split(/(`[^`\n]*`)/g)
+      .map(part =>
+        part.startsWith('`') && part.endsWith('`')
+          ? this.globalTheme.fg('syntaxString', part)
+          : this.highlightAtFiles(part)
+      )
+      .join('')
+  }
+
   private formatInputWithCommandHighlight(input: string): string {
     const commandMatch = input.match(/^\s*\/([\w:-]+)(.*)$/)
     if (!commandMatch) return input
@@ -124,7 +135,7 @@ class BorderStatusEditor extends CustomEditor {
     const [firstLine = '', ...others] = lines
 
     return [this.formatInputWithCommandHighlight(firstLine), ...others].map(line =>
-      this.highlightAtFiles(line)
+      this.applyInlineHighlighting(line)
     )
   }
 
