@@ -22,39 +22,51 @@ if (process.argv[2] && process.argv[2] !== '--profile') {
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 
-execSync('npx -y @puppeteer/browsers install chrome@stable', {
-  stdio: 'inherit',
-  cwd: scriptDir,
-})
+function findChromeForTestingBinary() {
+  try {
+    const matches = execFileSync(
+      '/usr/bin/find',
+      [
+        join(scriptDir, 'chrome'),
+        '-type',
+        'f',
+        '-path',
+        '*Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
+      ],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+    )
+      .trim()
+      .split('\n')
+      .filter(Boolean)
 
-function resolveChromeForTestingBinary() {
-  const matches = execFileSync(
-    '/usr/bin/find',
-    [
-      join(scriptDir, 'chrome'),
-      '-type',
-      'f',
-      '-path',
-      '*Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
-    ],
-    { encoding: 'utf8' }
-  )
-    .trim()
-    .split('\n')
-    .filter(Boolean)
+    return matches[0] ?? null
+  } catch {
+    return null
+  }
+}
 
-  const binary = matches[0]
+function ensureChromeForTestingInstalled() {
+  const existingBinary = findChromeForTestingBinary()
+  if (existingBinary) {
+    return existingBinary
+  }
 
-  if (!binary) {
+  execSync('npx -y @puppeteer/browsers install chrome@stable', {
+    stdio: 'inherit',
+    cwd: scriptDir,
+  })
+
+  const installedBinary = findChromeForTestingBinary()
+  if (!installedBinary) {
     console.error('✗ Google for Testing not found in ./chrome')
-    console.error('  Run: npx @puppeteer/browsers -y install chrome@stable')
+    console.error('  Run: npx -y @puppeteer/browsers install chrome@stable')
     process.exit(1)
   }
 
-  return binary
+  return installedBinary
 }
 
-const chromeBinary = resolveChromeForTestingBinary()
+const chromeBinary = ensureChromeForTestingInstalled()
 
 function hasChromeProcess(bin: string) {
   try {
