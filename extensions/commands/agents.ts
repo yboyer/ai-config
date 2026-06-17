@@ -11,7 +11,7 @@ import type {
 import { formatSkillsForPrompt, parseFrontmatter } from '@earendil-works/pi-coding-agent'
 
 const AGENT_SESSION_TYPE = 'agent-session'
-const AGENTS_DIR = path.join(__dirname, '..', 'agents')
+const AGENTS_DIR = path.join(__dirname, '..', '..', 'agents')
 const AGENT_FILE_EXTENSIONS = ['.agent.md', '.md'] as const
 
 type AgentDefinition = {
