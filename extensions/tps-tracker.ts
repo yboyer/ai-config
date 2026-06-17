@@ -106,6 +106,6 @@ export default function (pi: ExtensionAPI) {
     )
 
     ctx.ui.notify(`${icon} ${tpsLabel}  ${detail}`, 'info')
-    ctx.ui.setStatus(STATUS_KEY, '')
+    ctx.ui.setStatus(STATUS_KEY, undefined)
   })
 }

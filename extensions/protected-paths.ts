@@ -15,7 +15,6 @@
  * Supported settings keys (first match wins):
  * 1) "protectedPaths": [".env", ".git/", "node_modules/"]
  * 2) "extensionsConfig": { "protectedPaths": [...] }
- * 3) "extensionsConfig": { "protected-paths": { "paths": [...] } }
  *
  * Fallback default when nothing is configured:
  * [".env", ".git/", "node_modules/"]
@@ -80,7 +79,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on('tool_call', async (event, ctx) => {
     if (event.toolName !== 'write' && event.toolName !== 'edit') {
-      return undefined
+      return
     }
 
     if (protectedPaths === DEFAULT_PROTECTED_PATHS) {
@@ -88,7 +87,7 @@ export default function (pi: ExtensionAPI) {
     }
 
     const path = event.input.path as string | undefined
-    if (!path) return undefined
+    if (!path) return
 
     const isProtected = protectedPaths.some(p => path.includes(p))
 
@@ -99,6 +98,6 @@ export default function (pi: ExtensionAPI) {
       return { block: true, reason: `Path "${path}" is protected` }
     }
 
-    return undefined
+    return
   })
 }

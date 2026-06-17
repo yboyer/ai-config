@@ -1,6 +1,10 @@
 {
   "extensions": [
-    "../extensions"
+    "../extensions",
+    "../extensions/commands",
+    "../extensions/system-prompt",
+    "../extensions/tools",
+    "../extensions/ui"
   ],
   "skills": [
     "../skills"
