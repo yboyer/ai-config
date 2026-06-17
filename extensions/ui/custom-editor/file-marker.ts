@@ -110,7 +110,8 @@ export class FileMarkerController {
 
   expandText(text: string): string {
     return text.replace(this.fileMarkerRegex, (match, fileId) => {
-      return this.files.get(Number.parseInt(fileId, 10)) ?? match
+      const filePath = this.files.get(Number.parseInt(fileId, 10))
+      return filePath ? `@"${filePath}"` : match
     })
   }
 

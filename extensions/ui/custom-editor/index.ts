@@ -73,8 +73,8 @@ class BorderStatusEditor extends CustomEditor {
     this.model = model
   }
 
-  override getExpandedText(): string {
-    return this.fileMarkers.expandText(super.getExpandedText())
+  getTextExpanded(text: string): string {
+    return this.fileMarkers.expandText(text)
   }
 
   private getEditorState(): EditorOverride['state'] {
@@ -296,7 +296,7 @@ class BorderStatusEditor extends CustomEditor {
     return colorBg([29, 31, 35], row + ' '.repeat(width - rowWidth))
   }
 
-  override onSubmit = () => {
+  reset(): void {
     this.fileMarkers.clear()
   }
 
@@ -379,6 +379,18 @@ export default function (pi: ExtensionAPI) {
 
       return editor
     })
+  })
+
+  pi.on('input', event => {
+    if (!editor) return { action: 'continue' }
+
+    const transformedText = editor.getTextExpanded(event.text)
+    editor.reset()
+
+    return {
+      action: 'transform',
+      text: transformedText,
+    }
   })
 
   pi.on('session_shutdown', (_event, ctx) => {
