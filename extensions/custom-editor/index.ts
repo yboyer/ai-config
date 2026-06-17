@@ -1,3 +1,7 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
 import type { Model } from '@earendil-works/pi-ai'
 import type {
   ExtensionAPI,
@@ -27,11 +31,26 @@ function colorFg(rgb: [number, number, number], text: string): string {
 
 type ThinkingLevel = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
 
+type EditorOverride = {
+  state: {
+    lines: string[]
+    cursorLine: number
+    cursorCol: number
+  }
+  setCursorCol: (col: number) => void
+}
+
 class BorderStatusEditor extends CustomEditor {
   private prefix = '▎ '
   private suffix = ' '
   private atFileRegex = /(^|[ \t])(@"[^"]*"|@[^\s"]+)/g
-  model: Pick<Model<'any'>, 'name' | 'provider'> = {
+  private fileMarkerRegex = /\[file #(\d+) ([^\]]+)\]/g
+
+  // File path quote tracking
+  private fileQuoteMode = false
+  private fileQuoteStartLine = -1
+  private fileQuoteStartCol = -1
+  private model: Pick<Model<'any'>, 'name' | 'provider'> = {
     name: '',
     provider: '',
   }
@@ -40,6 +59,10 @@ class BorderStatusEditor extends CustomEditor {
   private tokenUsedStr = ''
   private contextWindow = 0
   private tokensUsed = 0
+
+  // File tracking for collapsed file markers
+  private files: Map<number, string> = new Map()
+  private fileCounter = 0
 
   constructor(
     tui: TUI,
@@ -50,10 +73,172 @@ class BorderStatusEditor extends CustomEditor {
     super(tui, editorTheme, keybindings)
   }
 
+  setModel(model: Pick<Model<'any'>, 'name' | 'provider'>) {
+    this.model = model
+  }
+
+  /** Store a file path and return its marker */
+  private storeFile(filePath: string): string {
+    this.fileCounter++
+    const fileId = this.fileCounter
+    this.files.set(fileId, filePath)
+    const filename = filePath.split('/').pop() ?? filePath
+    return `[file #${fileId} ${filename}]`
+  }
+
+  override getExpandedText(): string {
+    const text = super.getExpandedText()
+
+    let result = text
+    for (const [fileId, filePath] of this.files) {
+      const markerRegex = new RegExp(`\\[file #${fileId} [^]]+\\]`, 'g')
+      result = result.replace(markerRegex, filePath)
+    }
+    return result
+  }
+
+  /** Clear file tracking (called on submit) */
+  private clearFiles(): void {
+    this.files.clear()
+    this.fileCounter = 0
+  }
+
   private highlightAtFiles(input: string): string {
     return input.replace(this.atFileRegex, (_match, prefix: string, taggedPath: string) => {
-      return `${prefix}${colorFg([249, 157, 29], taggedPath)}`
+      return colorFg([249, 157, 29], prefix + taggedPath)
     })
+  }
+
+  private highlightFileMarkers(input: string): string {
+    return input.replace(this.fileMarkerRegex, (_match, fileId: string, filename: string) => {
+      return colorFg([249, 157, 29], `[file #${fileId} ${filename}]`)
+    })
+  }
+
+  private setCursor(col: number): void {
+    const editor = this as unknown as EditorOverride
+    editor.setCursorCol(col)
+  }
+
+  private expandUserPath(filePath: string): string {
+    if (filePath === '~') return os.homedir()
+    if (filePath.startsWith('~/')) return path.join(os.homedir(), filePath.slice(2))
+    return filePath
+  }
+
+  private getAbsoluteIndex(line: number, col: number, lines: string[]): number {
+    let index = 0
+    for (let i = 0; i < line; i++) {
+      index += lines[i].length + 1
+    }
+    return index + col
+  }
+
+  private isTrackedQuoteStillValid(lines: string[]): boolean {
+    if (!this.fileQuoteMode) return false
+    if (this.fileQuoteStartLine < 0 || this.fileQuoteStartLine >= lines.length) return false
+
+    const line = lines[this.fileQuoteStartLine] ?? ''
+    const quoteIndex = this.fileQuoteStartCol - 1
+    return quoteIndex >= 0 && line[quoteIndex] === "'"
+  }
+
+  private getTrackedQuotedPath(text: string, lines: string[]): string | null {
+    if (!this.isTrackedQuoteStillValid(lines)) return null
+
+    const cursor = this.getCursor()
+    const startPos = this.getAbsoluteIndex(
+      this.fileQuoteStartLine,
+      this.fileQuoteStartCol - 1,
+      lines
+    )
+    const endPos = this.getAbsoluteIndex(cursor.line, cursor.col, lines)
+    if (endPos <= startPos + 1) return ''
+
+    return text.slice(startPos + 1, endPos - 1)
+  }
+
+  private replaceRange(startPos: number, endPos: number, replacement: string): void {
+    const text = this.getText()
+    const nextText = `${text.slice(0, startPos)}${replacement}${text.slice(endPos)}`
+    const nextLines = nextText.split('\n')
+    const nextCursor = this.calculatePos(startPos + replacement.length, nextLines)
+
+    this.setText(nextText)
+    this.setCursor(nextCursor.col)
+  }
+
+  private startFileQuoteTracking(): void {
+    const cursor = this.getCursor()
+
+    this.fileQuoteMode = true
+    this.fileQuoteStartLine = cursor.line
+    this.fileQuoteStartCol = cursor.col
+  }
+
+  private endFileQuoteTracking(): void {
+    this.fileQuoteMode = false
+  }
+
+  override handleInput(data: string): void {
+    super.handleInput(data)
+
+    if (!this.fileQuoteMode && data !== "'") return
+
+    const text = this.getText()
+    const lines = text.split('\n')
+
+    if (this.fileQuoteMode && !this.isTrackedQuoteStillValid(lines)) {
+      this.endFileQuoteTracking()
+    }
+
+    // Handle file path quotes: detect opening/closing '
+    if (data !== "'") return
+
+    if (!this.fileQuoteMode) {
+      this.startFileQuoteTracking()
+      return
+    }
+
+    const filePath = this.getTrackedQuotedPath(text, lines)
+    if (!filePath) {
+      this.startFileQuoteTracking() // Restart tracking
+      return
+    }
+
+    try {
+      const resolvedPath = this.expandUserPath(filePath)
+      if (!fs.existsSync(resolvedPath)) {
+        this.startFileQuoteTracking() // Restart tracking
+        return
+      }
+
+      const marker = this.storeFile(resolvedPath)
+      const cursor = this.getCursor()
+      const startPos = this.getAbsoluteIndex(
+        this.fileQuoteStartLine,
+        this.fileQuoteStartCol - 1,
+        lines
+      )
+      const endPos = this.getAbsoluteIndex(cursor.line, cursor.col, lines)
+
+      this.replaceRange(startPos, endPos, marker)
+      this.endFileQuoteTracking()
+    } catch {
+      this.startFileQuoteTracking() // Restart tracking
+    }
+  }
+
+  /** Calculate line/col from a position index */
+  private calculatePos(index: number, lines: string[]): { line: number; col: number } {
+    let remaining = index
+    for (let i = 0; i < lines.length; i++) {
+      if (remaining <= lines[i].length) {
+        return { line: i, col: remaining }
+      }
+      remaining -= lines[i].length + 1
+    }
+    return { line: lines.length - 1, col: lines[lines.length - 1]?.length ?? 0 }
   }
 
   private applyInlineHighlighting(input: string): string {
@@ -62,7 +247,7 @@ class BorderStatusEditor extends CustomEditor {
       .map(part =>
         part.startsWith('`') && part.endsWith('`')
           ? this.globalTheme.fg('syntaxString', part)
-          : this.highlightAtFiles(part)
+          : this.highlightFileMarkers(this.highlightAtFiles(part))
       )
       .join('')
   }
@@ -77,10 +262,9 @@ class BorderStatusEditor extends CustomEditor {
     return `${styledCommand}${rest}`
   }
 
-  // Override to disable padding, since we're handling it in render for better control
-  setPaddingX(): void {}
-
-  getPaddingX(): number {
+  // Disable custom padding
+  override setPaddingX(): void {}
+  override getPaddingX(): number {
     return 0
   }
 
@@ -146,7 +330,11 @@ class BorderStatusEditor extends CustomEditor {
     return colorBg([29, 31, 35], row + ' '.repeat(width - rowWidth))
   }
 
-  render(width: number): string[] {
+  override onSubmit = () => {
+    this.clearFiles()
+  }
+
+  override render(width: number): string[] {
     const innerWidth = Math.max(1, width - this.prefix.length - this.suffix.length)
 
     const rendered = super.render(innerWidth)
@@ -175,14 +363,6 @@ class BorderStatusEditor extends CustomEditor {
 export default function (pi: ExtensionAPI) {
   let editor: BorderStatusEditor | undefined
 
-  pi.on('model_select', event => {
-    if (!editor) return
-
-    editor.model.name = event.model.id
-    editor.model.provider = event.model.provider
-    editor.refresh()
-  })
-
   function setContextUsage(ctx: ExtensionContext) {
     if (!editor) return
 
@@ -192,6 +372,17 @@ export default function (pi: ExtensionAPI) {
       tokensUsed: contextUsage?.tokens ?? 0,
     })
   }
+
+  pi.on('model_select', event => {
+    if (!editor) return
+
+    editor.setModel({
+      name: event.model?.id ?? 'N/A',
+      provider: event.model?.provider ?? '-',
+    })
+
+    editor.refresh()
+  })
 
   pi.on('thinking_level_select', event => {
     if (!editor) return
@@ -204,7 +395,7 @@ export default function (pi: ExtensionAPI) {
     if (!editor) return
 
     setContextUsage(ctx)
-    editor?.refresh()
+    editor.refresh()
   })
 
   pi.on('session_start', (_event, ctx) => {
@@ -212,8 +403,10 @@ export default function (pi: ExtensionAPI) {
 
     ctx.ui.setEditorComponent((tui, theme, keybindings) => {
       editor = new BorderStatusEditor(tui, theme, ctx.ui.theme, keybindings)
-      editor.model.name = ctx.model?.id ?? 'N/A'
-      editor.model.provider = ctx.model?.provider ?? '-'
+      editor.setModel({
+        name: ctx.model?.id ?? 'N/A',
+        provider: ctx.model?.provider ?? '-',
+      })
       editor.thinking = pi.getThinkingLevel()
       setContextUsage(ctx)
       editor.refresh()
