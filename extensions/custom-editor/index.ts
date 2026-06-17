@@ -38,6 +38,20 @@ type EditorOverride = {
     cursorCol: number
   }
   setCursorCol: (col: number) => void
+  historyIndex: number
+  lastAction: string | null
+  pushUndoSnapshot: () => void
+  autocompleteState?: unknown
+  updateAutocomplete: () => void
+  isInSlashCommandContext: (textBeforeCursor: string) => boolean
+  tryTriggerAutocomplete: () => void
+}
+
+type FileMarkerMatch = {
+  start: number
+  end: number
+  fileId: number
+  filename: string
 }
 
 class BorderStatusEditor extends CustomEditor {
@@ -68,9 +82,9 @@ class BorderStatusEditor extends CustomEditor {
     tui: TUI,
     private editorTheme: EditorTheme,
     private globalTheme: Theme,
-    keybindings: KeybindingsManager
+    private keybindingsManager: KeybindingsManager
   ) {
-    super(tui, editorTheme, keybindings)
+    super(tui, editorTheme, keybindingsManager)
   }
 
   setModel(model: Pick<Model<'any'>, 'name' | 'provider'>) {
@@ -89,12 +103,9 @@ class BorderStatusEditor extends CustomEditor {
   override getExpandedText(): string {
     const text = super.getExpandedText()
 
-    let result = text
-    for (const [fileId, filePath] of this.files) {
-      const markerRegex = new RegExp(`\\[file #${fileId} [^]]+\\]`, 'g')
-      result = result.replace(markerRegex, filePath)
-    }
-    return result
+    return text.replace(this.fileMarkerRegex, (match, fileId) => {
+      return this.files.get(Number.parseInt(fileId, 10)) ?? match
+    })
   }
 
   /** Clear file tracking (called on submit) */
@@ -115,9 +126,110 @@ class BorderStatusEditor extends CustomEditor {
     })
   }
 
+  private getEditorState(): EditorOverride['state'] {
+    const editor = this as unknown as EditorOverride
+    return editor.state
+  }
+
   private setCursor(col: number): void {
     const editor = this as unknown as EditorOverride
     editor.setCursorCol(col)
+  }
+
+  private getFileMarkers(line: string): FileMarkerMatch[] {
+    const markers: FileMarkerMatch[] = []
+    const fileMarkerRegex = new RegExp(this.fileMarkerRegex.source, this.fileMarkerRegex.flags)
+
+    for (const match of line.matchAll(fileMarkerRegex)) {
+      const start = match.index ?? -1
+      const fileId = Number.parseInt(match[1] ?? '', 10)
+      if (start < 0 || !Number.isFinite(fileId) || !this.files.has(fileId)) continue
+
+      markers.push({
+        start,
+        end: start + match[0].length,
+        fileId,
+        filename: match[2] ?? '',
+      })
+    }
+
+    return markers
+  }
+
+  private findContainingFileMarker(line: string, col: number): FileMarkerMatch | null {
+    return this.getFileMarkers(line).find(marker => marker.start < col && col < marker.end) ?? null
+  }
+
+  private findFileMarkerEndingAt(line: string, col: number): FileMarkerMatch | null {
+    return this.getFileMarkers(line).find(marker => marker.end === col) ?? null
+  }
+
+  private getNavigationDirection(data: string): 'left' | 'right' | null {
+    if (
+      this.keybindingsManager.matches(data, 'tui.editor.cursorLeft') ||
+      this.keybindingsManager.matches(data, 'tui.editor.cursorUp') ||
+      this.keybindingsManager.matches(data, 'tui.editor.cursorWordLeft') ||
+      this.keybindingsManager.matches(data, 'tui.editor.pageUp')
+    ) {
+      return 'left'
+    }
+
+    if (
+      this.keybindingsManager.matches(data, 'tui.editor.cursorRight') ||
+      this.keybindingsManager.matches(data, 'tui.editor.cursorDown') ||
+      this.keybindingsManager.matches(data, 'tui.editor.cursorWordRight') ||
+      this.keybindingsManager.matches(data, 'tui.editor.pageDown')
+    ) {
+      return 'right'
+    }
+
+    return null
+  }
+
+  private snapCursorOutOfFileMarker(direction: 'left' | 'right'): void {
+    const state = this.getEditorState()
+    const line = state.lines[state.cursorLine] ?? ''
+    const marker = this.findContainingFileMarker(line, state.cursorCol)
+    if (!marker) return
+
+    this.setCursor(direction === 'left' ? marker.start : marker.end)
+  }
+
+  private handleFileMarkerBackspace(): boolean {
+    const state = this.getEditorState()
+    if (state.cursorCol <= 0) return false
+
+    const line = state.lines[state.cursorLine] ?? ''
+    if (line[state.cursorCol - 1] !== ']') return false
+
+    const marker = this.findFileMarkerEndingAt(line, state.cursorCol)
+    if (!marker) return false
+
+    const editor = this as unknown as EditorOverride
+
+    editor.historyIndex = -1
+    editor.lastAction = null
+    editor.pushUndoSnapshot()
+
+    state.lines[state.cursorLine] = `${line.slice(0, marker.start)}${line.slice(marker.end)}`
+    this.setCursor(marker.start)
+
+    this.files.delete(marker.fileId)
+
+    if (this.onChange) {
+      this.onChange(this.getText())
+    }
+
+    const textBeforeCursor = state.lines[state.cursorLine]?.slice(0, state.cursorCol) ?? ''
+    if (editor.autocompleteState) {
+      editor.updateAutocomplete()
+    } else if (editor.isInSlashCommandContext(textBeforeCursor)) {
+      editor.tryTriggerAutocomplete()
+    } else if (textBeforeCursor.match(/(?:^|[\s])[@#][^\s]*$/)) {
+      editor.tryTriggerAutocomplete()
+    }
+
+    return true
   }
 
   private expandUserPath(filePath: string): string {
@@ -181,7 +293,19 @@ class BorderStatusEditor extends CustomEditor {
   }
 
   override handleInput(data: string): void {
+    if (
+      this.keybindingsManager.matches(data, 'tui.editor.deleteCharBackward') &&
+      this.handleFileMarkerBackspace()
+    ) {
+      return
+    }
+
     super.handleInput(data)
+
+    const navigationDirection = this.getNavigationDirection(data)
+    if (navigationDirection) {
+      this.snapCursorOutOfFileMarker(navigationDirection)
+    }
 
     if (!this.fileQuoteMode && data !== "'") return
 
