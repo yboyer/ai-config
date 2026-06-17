@@ -1,7 +1,3 @@
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
-
 import type { Model } from '@earendil-works/pi-ai'
 import type {
   ExtensionAPI,
@@ -14,6 +10,8 @@ import { CustomEditor } from '@earendil-works/pi-coding-agent'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 import { splitRenderedEditor } from './editor-autocomplete'
+import { FileMarkerController } from './file-marker'
+import { highlightAtFiles, highlightInlineCode } from './highlights'
 
 function colorBg(rgb: [number, number, number], text: string): string {
   const bg = `\x1b[48;2;${rgb[0]};${rgb[1]};${rgb[2]}m`
@@ -47,23 +45,11 @@ type EditorOverride = {
   tryTriggerAutocomplete: () => void
 }
 
-type FileMarkerMatch = {
-  start: number
-  end: number
-  fileId: number
-  filename: string
-}
-
 class BorderStatusEditor extends CustomEditor {
   private prefix = '▎ '
   private suffix = ' '
-  private atFileRegex = /(^|[ \t])(@"[^"]*"|@[^\s"]+)/g
-  private fileMarkerRegex = /\[file #(\d+) ([^\]]+)\]/g
+  private fileMarkers = new FileMarkerController()
 
-  // File path quote tracking
-  private fileQuoteMode = false
-  private fileQuoteStartLine = -1
-  private fileQuoteStartCol = -1
   private model: Pick<Model<'any'>, 'name' | 'provider'> = {
     name: '',
     provider: '',
@@ -73,10 +59,6 @@ class BorderStatusEditor extends CustomEditor {
   private tokenUsedStr = ''
   private contextWindow = 0
   private tokensUsed = 0
-
-  // File tracking for collapsed file markers
-  private files: Map<number, string> = new Map()
-  private fileCounter = 0
 
   constructor(
     tui: TUI,
@@ -91,39 +73,8 @@ class BorderStatusEditor extends CustomEditor {
     this.model = model
   }
 
-  /** Store a file path and return its marker */
-  private storeFile(filePath: string): string {
-    this.fileCounter++
-    const fileId = this.fileCounter
-    this.files.set(fileId, filePath)
-    const filename = filePath.split('/').pop() ?? filePath
-    return `[file #${fileId} ${filename}]`
-  }
-
   override getExpandedText(): string {
-    const text = super.getExpandedText()
-
-    return text.replace(this.fileMarkerRegex, (match, fileId) => {
-      return this.files.get(Number.parseInt(fileId, 10)) ?? match
-    })
-  }
-
-  /** Clear file tracking (called on submit) */
-  private clearFiles(): void {
-    this.files.clear()
-    this.fileCounter = 0
-  }
-
-  private highlightAtFiles(input: string): string {
-    return input.replace(this.atFileRegex, (_match, prefix: string, taggedPath: string) => {
-      return colorFg([249, 157, 29], prefix + taggedPath)
-    })
-  }
-
-  private highlightFileMarkers(input: string): string {
-    return input.replace(this.fileMarkerRegex, (_match, fileId: string, filename: string) => {
-      return colorFg([249, 157, 29], `[file #${fileId} ${filename}]`)
-    })
+    return this.fileMarkers.expandText(super.getExpandedText())
   }
 
   private getEditorState(): EditorOverride['state'] {
@@ -134,34 +85,6 @@ class BorderStatusEditor extends CustomEditor {
   private setCursor(col: number): void {
     const editor = this as unknown as EditorOverride
     editor.setCursorCol(col)
-  }
-
-  private getFileMarkers(line: string): FileMarkerMatch[] {
-    const markers: FileMarkerMatch[] = []
-    const fileMarkerRegex = new RegExp(this.fileMarkerRegex.source, this.fileMarkerRegex.flags)
-
-    for (const match of line.matchAll(fileMarkerRegex)) {
-      const start = match.index ?? -1
-      const fileId = Number.parseInt(match[1] ?? '', 10)
-      if (start < 0 || !Number.isFinite(fileId) || !this.files.has(fileId)) continue
-
-      markers.push({
-        start,
-        end: start + match[0].length,
-        fileId,
-        filename: match[2] ?? '',
-      })
-    }
-
-    return markers
-  }
-
-  private findContainingFileMarker(line: string, col: number): FileMarkerMatch | null {
-    return this.getFileMarkers(line).find(marker => marker.start < col && col < marker.end) ?? null
-  }
-
-  private findFileMarkerEndingAt(line: string, col: number): FileMarkerMatch | null {
-    return this.getFileMarkers(line).find(marker => marker.end === col) ?? null
   }
 
   private getNavigationDirection(data: string): 'left' | 'right' | null {
@@ -189,21 +112,17 @@ class BorderStatusEditor extends CustomEditor {
   private snapCursorOutOfFileMarker(direction: 'left' | 'right'): void {
     const state = this.getEditorState()
     const line = state.lines[state.cursorLine] ?? ''
-    const marker = this.findContainingFileMarker(line, state.cursorCol)
-    if (!marker) return
+    const nextCursorCol = this.fileMarkers.getSnappedCursorCol(line, state.cursorCol, direction)
+    if (nextCursorCol === null) return
 
-    this.setCursor(direction === 'left' ? marker.start : marker.end)
+    this.setCursor(nextCursorCol)
   }
 
   private handleFileMarkerBackspace(): boolean {
     const state = this.getEditorState()
-    if (state.cursorCol <= 0) return false
-
     const line = state.lines[state.cursorLine] ?? ''
-    if (line[state.cursorCol - 1] !== ']') return false
-
-    const marker = this.findFileMarkerEndingAt(line, state.cursorCol)
-    if (!marker) return false
+    const deletion = this.fileMarkers.deleteMarkerAtBackspace(line, state.cursorCol)
+    if (!deletion) return false
 
     const editor = this as unknown as EditorOverride
 
@@ -211,10 +130,8 @@ class BorderStatusEditor extends CustomEditor {
     editor.lastAction = null
     editor.pushUndoSnapshot()
 
-    state.lines[state.cursorLine] = `${line.slice(0, marker.start)}${line.slice(marker.end)}`
-    this.setCursor(marker.start)
-
-    this.files.delete(marker.fileId)
+    state.lines[state.cursorLine] = deletion.nextLine
+    this.setCursor(deletion.nextCursorCol)
 
     if (this.onChange) {
       this.onChange(this.getText())
@@ -232,42 +149,12 @@ class BorderStatusEditor extends CustomEditor {
     return true
   }
 
-  private expandUserPath(filePath: string): string {
-    if (filePath === '~') return os.homedir()
-    if (filePath.startsWith('~/')) return path.join(os.homedir(), filePath.slice(2))
-    return filePath
-  }
-
   private getAbsoluteIndex(line: number, col: number, lines: string[]): number {
     let index = 0
     for (let i = 0; i < line; i++) {
       index += lines[i].length + 1
     }
     return index + col
-  }
-
-  private isTrackedQuoteStillValid(lines: string[]): boolean {
-    if (!this.fileQuoteMode) return false
-    if (this.fileQuoteStartLine < 0 || this.fileQuoteStartLine >= lines.length) return false
-
-    const line = lines[this.fileQuoteStartLine] ?? ''
-    const quoteIndex = this.fileQuoteStartCol - 1
-    return quoteIndex >= 0 && line[quoteIndex] === "'"
-  }
-
-  private getTrackedQuotedPath(text: string, lines: string[]): string | null {
-    if (!this.isTrackedQuoteStillValid(lines)) return null
-
-    const cursor = this.getCursor()
-    const startPos = this.getAbsoluteIndex(
-      this.fileQuoteStartLine,
-      this.fileQuoteStartCol - 1,
-      lines
-    )
-    const endPos = this.getAbsoluteIndex(cursor.line, cursor.col, lines)
-    if (endPos <= startPos + 1) return ''
-
-    return text.slice(startPos + 1, endPos - 1)
   }
 
   private replaceRange(startPos: number, endPos: number, replacement: string): void {
@@ -280,21 +167,10 @@ class BorderStatusEditor extends CustomEditor {
     this.setCursor(nextCursor.col)
   }
 
-  private startFileQuoteTracking(): void {
-    const cursor = this.getCursor()
-
-    this.fileQuoteMode = true
-    this.fileQuoteStartLine = cursor.line
-    this.fileQuoteStartCol = cursor.col
-  }
-
-  private endFileQuoteTracking(): void {
-    this.fileQuoteMode = false
-  }
-
   override handleInput(data: string): void {
     if (
-      this.keybindingsManager.matches(data, 'tui.editor.deleteCharBackward') &&
+      (this.keybindingsManager.matches(data, 'tui.editor.deleteCharBackward') ||
+        this.keybindingsManager.matches(data, 'tui.editor.deleteWordBackward')) &&
       this.handleFileMarkerBackspace()
     ) {
       return
@@ -307,50 +183,21 @@ class BorderStatusEditor extends CustomEditor {
       this.snapCursorOutOfFileMarker(navigationDirection)
     }
 
-    if (!this.fileQuoteMode && data !== "'") return
-
     const text = this.getText()
     const lines = text.split('\n')
+    this.fileMarkers.syncQuoteTracking(lines)
 
-    if (this.fileQuoteMode && !this.isTrackedQuoteStillValid(lines)) {
-      this.endFileQuoteTracking()
-    }
-
-    // Handle file path quotes: detect opening/closing '
     if (data !== "'") return
 
-    if (!this.fileQuoteMode) {
-      this.startFileQuoteTracking()
-      return
-    }
+    const replacement = this.fileMarkers.handleQuoteInput({
+      text,
+      lines,
+      cursor: this.getCursor(),
+      getAbsoluteIndex: this.getAbsoluteIndex.bind(this),
+    })
+    if (!replacement) return
 
-    const filePath = this.getTrackedQuotedPath(text, lines)
-    if (!filePath) {
-      this.startFileQuoteTracking() // Restart tracking
-      return
-    }
-
-    try {
-      const resolvedPath = this.expandUserPath(filePath)
-      if (!fs.existsSync(resolvedPath)) {
-        this.startFileQuoteTracking() // Restart tracking
-        return
-      }
-
-      const marker = this.storeFile(resolvedPath)
-      const cursor = this.getCursor()
-      const startPos = this.getAbsoluteIndex(
-        this.fileQuoteStartLine,
-        this.fileQuoteStartCol - 1,
-        lines
-      )
-      const endPos = this.getAbsoluteIndex(cursor.line, cursor.col, lines)
-
-      this.replaceRange(startPos, endPos, marker)
-      this.endFileQuoteTracking()
-    } catch {
-      this.startFileQuoteTracking() // Restart tracking
-    }
+    this.replaceRange(replacement.startPos, replacement.endPos, replacement.marker)
   }
 
   /** Calculate line/col from a position index */
@@ -363,17 +210,6 @@ class BorderStatusEditor extends CustomEditor {
       remaining -= lines[i].length + 1
     }
     return { line: lines.length - 1, col: lines[lines.length - 1]?.length ?? 0 }
-  }
-
-  private applyInlineHighlighting(input: string): string {
-    return input
-      .split(/(`[^`\n]*`)/g)
-      .map(part =>
-        part.startsWith('`') && part.endsWith('`')
-          ? this.globalTheme.fg('syntaxString', part)
-          : this.highlightFileMarkers(this.highlightAtFiles(part))
-      )
-      .join('')
   }
 
   private formatInputWithCommandHighlight(input: string): string {
@@ -442,8 +278,14 @@ class BorderStatusEditor extends CustomEditor {
   private renderInput(lines: string[]): string[] {
     const [firstLine = '', ...others] = lines
 
+    const modifiers: ((input: string) => string)[] = [
+      input => highlightInlineCode(input, part => this.globalTheme.fg('syntaxString', part)),
+      input => highlightAtFiles(input, part => colorFg([249, 157, 29], part)),
+      input => this.fileMarkers.highlight(input, part => colorFg([249, 157, 29], part)),
+    ]
+
     return [this.formatInputWithCommandHighlight(firstLine), ...others].map(line =>
-      this.applyInlineHighlighting(line)
+      modifiers.reduce((text, modifier) => modifier(text), line)
     )
   }
 
@@ -455,7 +297,7 @@ class BorderStatusEditor extends CustomEditor {
   }
 
   override onSubmit = () => {
-    this.clearFiles()
+    this.fileMarkers.clear()
   }
 
   override render(width: number): string[] {
