@@ -6,7 +6,8 @@ import type { ExtensionAPI, ExtensionContext, Theme } from '@earendil-works/pi-c
 const execFileAsync = promisify(execFile)
 const STATUS_KEY = 'copilot-usage'
 const REFRESH_INTERVAL_MS = 1 * 60 * 1000
-const GH_ARGS = ['api', '/copilot_internal/user']
+const COPILOT_USAGE_COMMAND =
+  `GH_TOKEN="$(jq -r '."github-copilot".refresh' ~/.pi/agent/auth.json)" gh api /copilot_internal/user`
 
 type PremiumInteractionsSnapshot = {
   overage_count: number
@@ -116,7 +117,7 @@ function buildUsageState(payload: CopilotUserResponse): UsageState {
 }
 
 async function fetchUsage(): Promise<UsageState> {
-  const { stdout } = await execFileAsync('gh', GH_ARGS, {
+  const { stdout } = await execFileAsync('bash', ['-lc', COPILOT_USAGE_COMMAND], {
     timeout: 15_000,
     maxBuffer: 1024 * 1024,
   })
