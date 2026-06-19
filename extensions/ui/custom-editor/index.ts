@@ -293,7 +293,7 @@ class BorderStatusEditor extends CustomEditor {
     const row = this.borderColor(this.prefix) + line + this.suffix
     const rowWidth = visibleWidth(row)
 
-    return colorBg([29, 31, 35], row + ' '.repeat(width - rowWidth))
+    return colorBg([41, 46, 55], row + ' '.repeat(width - rowWidth))
   }
 
   reset(): void {
