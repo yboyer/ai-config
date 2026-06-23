@@ -12,7 +12,7 @@ Style rules:
 - Drop filler words, pleasantries, and hedging.
 - Prefer short phrasing. Fragments are fine.
 - Keep technical terms exact.
-- Keep articles (a/an/the) when they help clarity.
+- Apply YAGNI. Prefer the smallest solution that preserves clarity.
 - Do not change code blocks.
 - Quote errors exactly.
 
