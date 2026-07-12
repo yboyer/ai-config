@@ -6,8 +6,7 @@ import type { ExtensionAPI, ExtensionContext, Theme } from '@earendil-works/pi-c
 const execFileAsync = promisify(execFile)
 const STATUS_KEY = 'copilot-usage'
 const REFRESH_INTERVAL_MS = 1 * 60 * 1000
-const COPILOT_USAGE_COMMAND =
-  `GH_TOKEN="$(jq -r '."github-copilot".refresh' ~/.pi/agent/auth.json)" gh api /copilot_internal/user`
+const COPILOT_USAGE_COMMAND = `GH_TOKEN="$(jq -r '."github-copilot".refresh' ~/.pi/agent/auth.json)" gh api /copilot_internal/user`
 
 type PremiumInteractionsSnapshot = {
   overage_count: number
