@@ -28,14 +28,6 @@ function removeColorCodes(text: string): string {
   return text.replace(/\x1b\[[0-9;]*m/g, '')
 }
 
-function formatCwd(cwd: string): string {
-  const home = process.env.HOME
-  if (home && cwd.startsWith(home)) {
-    return `~${cwd.slice(home.length)}`
-  }
-  return cwd
-}
-
 export default function (pi: ExtensionAPI) {
   function installFooter(ctx: ExtensionContext) {
     ctx.ui.setFooter((tui, theme, footerData) => {
