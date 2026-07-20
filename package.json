@@ -60,6 +60,6 @@
     ]
   },
   "devDependencies": {
-    "@yboyer/config": "1.4.2"
+    "@yboyer/config": "1.4.3"
   }
 }
