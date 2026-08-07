@@ -74,6 +74,14 @@ npx skills add github.com/yboyer/ai-config
 }
 ```
 
+### `npm:@tintinweb/pi-tasks`
+
+Ajoutez cette variable d’environnement pour empêcher l’extension de créer des fichiers ; les tâches sont alors uniquement stockées en mémoire :
+
+```bash
+export PI_TASKS=off
+```
+
 ### `npm:pi-tool-display`
 
 ```json
