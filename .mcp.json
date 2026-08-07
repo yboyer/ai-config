@@ -5,12 +5,23 @@
   },
   "mcpServers": {
     "context7": {
-      "type": "http",
-      "url": "https://mcp.context7.com/mcp/oauth"
+      "url": "https://mcp.context7.com/mcp/oauth",
+      "directTools": true
     },
     "eas": {
-      "type": "http",
       "url": "https://mcp.expo.dev/mcp"
+    },
+    "notion": {
+      "url": "https://mcp.notion.com/mcp",
+      "directTools": [
+        "notion-search",
+        "notion-fetch",
+        "notion-download-attachment",
+        "notion-get-comments",
+        "notion-query-data-sources",
+        "notion-query-database-view",
+        "notion-search-agents"
+      ]
     }
   }
 }
