@@ -48,6 +48,8 @@ npx skills add github.com/yboyer/ai-config
   },
   "autocompleteMaxVisible": 7,
   "treeFilterMode": "default"
+  "tuiMode": "fullscreen",
+  "fullscreenScrollbar": "always"
   "packages": [
     "git:github.com/yboyer/ai-config",
     "npm:@juicesharp/rpiv-ask-user-question",
