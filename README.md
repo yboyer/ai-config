@@ -84,6 +84,8 @@ export PI_TASKS=off
 
 ### `npm:pi-tool-display`
 
+`~/.pi/agent/extensions/pi-tool-display/config.json`
+
 ```json
 {
   "registerToolOverrides": {
