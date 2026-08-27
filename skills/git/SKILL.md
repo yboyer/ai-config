@@ -13,8 +13,8 @@ Before proposing or creating Git metadata:
 
 1. Read `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, PR templates, and GitHub configuration when present.
 2. Inspect recent history with `git log --oneline -20` and existing branch names with `git branch -a`.
-3. Follow an explicit repository convention over this guide.
-4. Ask only when a choice materially affects the result (for example, ticket number or PR language).
+3. Follow an explicit repository convention over this guide, except that branch names, commit messages, PR titles, and PR descriptions must be written in English.
+4. Ask only when a choice materially affects the result (for example, ticket number).
 
 Never commit, push, create a branch, or open a PR unless the user explicitly requests that action.
 
@@ -57,6 +57,7 @@ refactor/extract-validation-service
 Rules:
 
 - Start with the type, use `/` as the separator.
+- Write the summary in English.
 - Describe the intended outcome, not the implementation detail.
 - Keep it short: ideally 3–6 meaningful words after the type.
 - Do not use spaces, capitals, accents, underscores, vague words (`update`, `changes`, `fixes`), personal names, or dates.
@@ -82,7 +83,7 @@ chore(deps): upgrade vite to 6.1.0
 Rules:
 
 - Use the same types as branch names; add `build` for build-system changes when useful.
-- Write the summary in imperative present tense: `add`, `fix`, `remove`, `prevent`.
+- Write the summary in English, in imperative present tense: `add`, `fix`, `remove`, `prevent`.
 - Lowercase the summary; omit the final period.
 - Keep the subject within 72 characters when practical.
 - Make one logical change per commit; do not mix refactors with behavior changes unless inseparable.
@@ -108,7 +109,7 @@ Avoid generic subjects such as `fix bug`, `updates`, `wip`, `misc`, or `changes`
 
 ## Pull request descriptions
 
-Use the repository PR template if it exists. Otherwise, write in the repository's primary language and use this structure:
+Use the repository PR template if it exists, but write the PR title and description in English. Otherwise, use this structure:
 
 ```markdown
 ## Summary
@@ -132,6 +133,7 @@ Use the repository PR template if it exists. Otherwise, write in the repository'
 
 Rules:
 
+- Write the title and description in English.
 - Explain the outcome and reason, not a file-by-file diff.
 - Lead with the user or system impact.
 - Include only checks actually run; never claim unrun tests passed.
