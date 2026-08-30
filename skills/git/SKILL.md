@@ -141,6 +141,7 @@ Rules:
 - Call out breaking changes, migrations, configuration changes, security implications, and rollback steps.
 - Use GitHub closing keywords (`Closes`, `Fixes`, `Resolves`) only for the issue the PR should close.
 - Keep the title concise, imperative, and aligned with the commit convention. Omit the Conventional Commit prefix only if repository PRs do.
+- When practical and necessary, organize the PR into separate, logical commits to make review easier.
 
 ## Response format
 
