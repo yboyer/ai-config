@@ -2,8 +2,8 @@
 
 Package with custom setup:
 
-- custom skills, prompts, agents
-- custom pi extensions and theme
+- custom prompts and agents
+- custom Pi extensions and theme
 
 ## Harness install
 
@@ -22,16 +22,6 @@ pi install git:github.com/yboyer/ai-config
 ### VSCode
 
 Use the git URL to install the extension directly from GitHub: <https://github.com/yboyer/ai-config.git>
-
-## Skills via `npx skills`
-
-This repo is compatible with [`npx skills`](https://github.com/vercel-labs/skills) because skills live in `skills/`.
-
-Example:
-
-```bash
-npx skills add github.com/yboyer/ai-config
-```
 
 ## Pi personal setup
 

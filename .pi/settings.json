@@ -6,9 +6,6 @@
     "../extensions/tools",
     "../extensions/ui"
   ],
-  "skills": [
-    "../skills"
-  ],
   "prompts": [
     "../commands"
   ],
