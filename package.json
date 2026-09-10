@@ -55,6 +55,6 @@
     ]
   },
   "devDependencies": {
-    "@yboyer/config": "1.4.7"
+    "@yboyer/config": "1.5.1"
   }
 }
