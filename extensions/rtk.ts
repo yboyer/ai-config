@@ -87,11 +87,7 @@ export default async function (pi: ExtensionAPI) {
       // Delegate to RTK.
       const rewritten = await rewriteCommand(pi, cmd, ctx.signal)
       if (rewritten && rewritten !== cmd) {
-        ctx.ui.notify('Rewrote command with RTK', 'info')
         event.input.command = rewritten
-      } else {
-        // No rewrite; pass through unchanged.
-        ctx.ui.notify('No RTK rewrite found', 'info')
       }
     } catch (err) {
       ctx.ui.notify(
