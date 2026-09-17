@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "system-prompts",
+  "version": "0.1.0",
+  "description": "Inject the shared concise-mode and intent-clarifier instructions at session start.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/append-system-prompts.mjs\"",
+            "timeout": 5,
+            "statusMessage": "Loading shared system instructions..."
+          }
+        ]
+      }
+    ]
+  }
+}

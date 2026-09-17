@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "yboyer",
+  "owner": {
+    "name": "yboyer"
+  },
+  "plugins": [
+    {
+      "name": "system-prompts",
+      "source": "./",
+      "description": "Shared concise-mode and intent-clarifier system instructions."
+    }
+  ]
+}

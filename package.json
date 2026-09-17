@@ -23,10 +23,14 @@
     "url": "https://github.com/yboyer/ai-config/issues"
   },
   "files": [
-    "extensions",
-    "themes",
-    "prompts",
+    ".claude-plugin",
     "agents",
+    "extensions",
+    "hooks",
+    "plugins",
+    "prompts",
+    "system-prompts",
+    "themes",
     "README.md"
   ],
   "scripts": {
