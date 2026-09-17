@@ -23,6 +23,26 @@ pi install git:github.com/yboyer/ai-config
 
 Use the git URL to install the extension directly from GitHub: <https://github.com/yboyer/ai-config.git>
 
+### Claude Code
+
+The included plugin injects the shared `system-prompts/*.md` rules as a
+system reminder at every `SessionStart`, including resumed and compacted sessions.
+
+Install it globally:
+
+```bash
+claude plugin marketplace add github:yboyer/ai-config
+claude plugin install system-prompts@yboyer
+```
+
+Restart Claude Code, or run `/reload-plugins` in an existing session. Verify the
+installation with:
+
+```bash
+claude plugin list
+```
+
+
 ## Pi personal setup
 
 ### `settings.json`
