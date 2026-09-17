@@ -2,7 +2,7 @@
 
 Package with custom setup:
 
-- custom prompts and agents
+- custom agents
 - custom Pi extensions and theme
 
 ## Harness install
