@@ -1,19 +1,33 @@
 # Project Guidelines
 
+`@yboyer/ai-config` is an npm package that provides custom Pi agents, extensions, and themes.
+
+## Repository
+
+- Use npm. The supported Node.js version is defined in `.node-version`; install dependencies with `npm ci`.
+- Run `npm run lint` after TypeScript, JSON, or configuration changes.
+- Read `README.md` before changing package installation or user-facing setup.
+- Keep package exports in sync with `package.json` when adding or moving extensions, agents, or themes.
+
+### Directory map
+
+- `extensions/`: Pi extensions, grouped by command, system prompt, tool, and UI concerns.
+- `agents/`: Pi agent definitions.
+- `themes/`: Pi themes.
+- `.plugin/plugin.json`: plugin metadata.
+- `.pi/`: local Pi settings; do not treat it as package content.
+
 ## Pi Documentation
 
-Only apply this section when the user asks about pi itself, its SDK, extensions, themes, skills, prompt templates, TUI, keybindings, custom providers, models, or pi packages.
+Apply this section only for Pi, its SDK, extensions, themes, skills, prompt templates, TUI, keybindings, custom providers, models, or packages.
 
 - Main documentation: `./node_modules/@earendil-works/pi-coding-agent/README.md`
 - Additional docs root: `./node_modules/@earendil-works/pi-coding-agent/docs`
 - Examples root: `./node_modules/@earendil-works/pi-coding-agent/examples`
-- When resolving `docs/...`, read from the Additional docs root, not from the workspace root.
-- When resolving `examples/...`, read from the Examples root, not from the workspace root.
-- Read pi markdown files completely before answering or implementing changes.
-- Follow markdown cross-references mentioned by the pi docs before implementing changes.
-- If a pi topic points to a related doc, read that related doc too.
+- Resolve `docs/...` from the additional docs root and `examples/...` from the examples root.
+- Read relevant Pi Markdown documentation completely before implementing changes. Follow its Markdown cross-references and inspect relevant examples.
 
-## Pi Topic Map
+### Pi topic map
 
 - Extensions: `docs/extensions.md`, `examples/extensions/`
 - Themes: `docs/themes.md`
@@ -25,7 +39,3 @@ Only apply this section when the user asks about pi itself, its SDK, extensions,
 - Custom providers: `docs/custom-provider.md`
 - Adding models: `docs/models.md`
 - Pi packages: `docs/packages.md`
-
-## Working Rule
-
-When working on pi-specific topics, consult the relevant docs and examples first, then implement.

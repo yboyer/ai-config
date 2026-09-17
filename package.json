@@ -2,7 +2,7 @@
   "name": "@yboyer/ai-config",
   "version": "0.1.0",
   "private": false,
-  "description": "AI package with custom pi extensions, prompts, agents, and themes.",
+  "description": "AI package with custom Pi extensions, agents, and themes.",
   "license": "Apache-2.0",
   "type": "module",
   "keywords": [
@@ -11,7 +11,6 @@
     "ai",
     "extensions",
     "agents",
-    "prompts",
     "themes"
   ],
   "repository": {
@@ -28,7 +27,6 @@
     "extensions",
     "hooks",
     "plugins",
-    "prompts",
     "system-prompts",
     "themes",
     "README.md"
@@ -50,9 +48,6 @@
       "./extensions/system-prompt",
       "./extensions/tools",
       "./extensions/ui"
-    ],
-    "prompts": [
-      "./commands"
     ],
     "themes": [
       "./themes"

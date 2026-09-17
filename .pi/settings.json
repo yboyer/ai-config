@@ -6,9 +6,6 @@
     "../extensions/tools",
     "../extensions/ui"
   ],
-  "prompts": [
-    "../commands"
-  ],
   "themes": [
     "../themes"
   ],
