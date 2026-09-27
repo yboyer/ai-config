@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/hooks/append-system-prompts.mjs\"",
+            "timeout": 5,
+            "statusMessage": "Loading shared system instructions..."
+          }
+        ]
+      }
+    ]
+  }
+}
