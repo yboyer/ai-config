@@ -1,0 +1,6 @@
+{
+  "name": "system-prompts",
+  "version": "0.1.0",
+  "description": "Inject shared concise-mode and intent-clarifier instructions at session start.",
+  "hooks": "./hooks/codex.json"
+}

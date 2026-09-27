@@ -19,6 +19,21 @@ Package not published on npm. Install from git only.
 pi install git:github.com/yboyer/ai-config
 ```
 
+### Codex CLI
+
+The `system-prompts` plugin reuses the Claude Code `SessionStart` script to load
+all shared `system-prompts/*.md` instructions at session start (including resume
+and compaction). Codex adds them as developer context, not as its base system
+prompt. Hooks require Node.js and must be approved when Codex asks to trust them.
+
+```bash
+codex plugin marketplace add yboyer/ai-config
+codex plugin add system-prompts@yboyer
+```
+
+Check installation with `codex plugin list`. Plugins are not available in the
+Codex IDE extension.
+
 ### VSCode
 
 Use the git URL to install the extension directly from GitHub: <https://github.com/yboyer/ai-config.git>

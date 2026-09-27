@@ -22,7 +22,9 @@
     "url": "https://github.com/yboyer/ai-config/issues"
   },
   "files": [
+    ".agents/plugins",
     ".claude-plugin",
+    ".codex-plugin",
     "agents",
     "extensions",
     "hooks",
