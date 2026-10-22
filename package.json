@@ -57,6 +57,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@yboyer/config": "1.5.2"
+    "@yboyer/config": "2.1.2"
   }
 }
