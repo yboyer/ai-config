@@ -58,5 +58,11 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@yboyer/config": "2.1.2"
+  },
+  "overrides": {
+    "@earendil-works/pi-coding-agent@1.3.0": {
+      ".": "$@earendil-works/pi-coding-agent",
+      "undici": "8.12.2"
+    }
   }
 }
