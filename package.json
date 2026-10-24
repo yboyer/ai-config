@@ -40,7 +40,7 @@
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-coding-agent": "*",
     "@earendil-works/pi-tui": "*",
-    "puppeteer-core": "25.14.0",
+    "puppeteer-core": "25.15.0",
     "typebox": "*"
   },
   "pi": {
