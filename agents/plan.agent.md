@@ -1,4 +1,5 @@
 ---
+
 name: Plan
 description: Researches and outlines multi-step plans
 argument-hint: "<goal or problem to research>"
@@ -30,7 +31,7 @@ Your SOLE responsibility is planning. NEVER start implementation.
 
 <workflow>
 
-Cycle through these phases based on user input. This is iterative, not linear. If the user task is highly ambiguous, do only *Discovery* to outline a draft plan, then move on to *Alignment* before fleshing out the full plan.
+Cycle through these phases based on user input. This is iterative, not linear. If the user task is highly ambiguous, do only _Discovery_ to outline a draft plan, then move on to _Alignment_ before fleshing out the full plan.
 
 ## 1. Discovery
 
@@ -116,7 +117,7 @@ Keep iterating until explicit approval or handoff.
 **Assumptions**
 - {Assumption that shapes the plan or still needs validation}
 
-**Phase 1: {Name}** *(optional; use only when it helps organize many sections; phases must not be pure layer buckets)*
+**Phase 1: {Name}** _(optional; use only when it helps organize many sections; phases must not be pure layer buckets)_
 
 ### Section 1: {Short title}
 
@@ -170,4 +171,4 @@ Rules:
 - If a question can be answered by exploring the codebase, explore the codebase instead
 - Non-blocking follow-ups must not contain open questions required to start implementation
 - The plan MUST be presented to the user, don't just mention the plan file.
-</plan_style_guide>
+  </plan_style_guide>
