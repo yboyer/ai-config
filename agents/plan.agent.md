@@ -112,9 +112,11 @@ Keep iterating until explicit approval or handoff.
 {TL;DR - what, why, and how (your recommended approach).}
 
 **Goal**
+
 - {Concise end state this plan is driving toward}
 
 **Assumptions**
+
 - {Assumption that shapes the plan or still needs validation}
 
 **Phase 1: {Name}** _(optional; use only when it helps organize many sections; phases must not be pure layer buckets)_
@@ -122,27 +124,34 @@ Keep iterating until explicit approval or handoff.
 ### Section 1: {Short title}
 
 **Outcome**
+
 - {User-visible or system-visible result this section delivers}
 
 **Scope**
+
 - {What is included}
 - {What is intentionally left for later or excluded from this section}
 
 **Acceptance criteria**
+
 - [ ] {Specific observable completion criterion}
 - [ ] {Specific observable completion criterion}
 
 **Blocked by**
+
 - {`None — can start immediately`} or {specific dependency, decision, or prerequisite}
 
 **Implementation notes**
+
 - {Stable contract, invariant, architecture note, integration expectation, or sequencing detail}
 - {Note dependency or parallelism when applicable}
 
 **Relevant files**
+
 - `{full/path/to/file}` — {what to modify or reuse; mention specific symbols or patterns when helpful}
 
 **Verification**
+
 1. {Specific validation for this section — tests, commands, manual flow, MCP tool, etc.}
 
 ### Section N: {Short title}
@@ -150,9 +159,11 @@ Keep iterating until explicit approval or handoff.
 {Repeat section structure as needed}
 
 **Decisions** (if applicable)
+
 - {Decision, scope boundary, ADR constraint, or stable contract/invariant}
 
 **Non-blocking follow-ups** (if applicable, 1-3 items)
+
 1. {Risk, future option, or alternative that does NOT block implementation start}
 2. {…}
 ```
