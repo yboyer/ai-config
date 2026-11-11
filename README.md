@@ -57,7 +57,6 @@ installation with:
 claude plugin list
 ```
 
-
 ## Pi personal setup
 
 ### `settings.json`
